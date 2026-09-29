@@ -382,7 +382,6 @@ public partial class Settings
                 {
                     var addable = GetAddableNeeds(DefProvider.Current.AllDefsListForReading<NeedDef>(),
                         limits);
-                    if (addable.Count == 0) return;
                     Find.WindowStack.Add(new FloatMenu([
                         .. addable.Select(def => new FloatMenuOption(def.GetLabel(),
                             () => { limits.Add(new NeedLimit(def)); })
