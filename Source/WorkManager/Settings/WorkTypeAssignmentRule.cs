@@ -415,7 +415,7 @@ internal class WorkTypeAssignmentRule : DefCache<WorkTypeDef>, IExposable
                 foreach (var limit in NeedLimits)
                 {
                     stringBuilder.AppendLineIndented(
-                        $"{(limit.Def != null ? limit.Label : limit.DefName)}: {limit.Threshold.ToStringPercent()}",
+                        $"{limit.Label}: {limit.Threshold.ToStringPercent()}",
                         2);
                 }
             }
@@ -648,7 +648,9 @@ internal class WorkTypeAssignmentRule : DefCache<WorkTypeDef>, IExposable
             limit == null || string.IsNullOrEmpty(limit.DefName) || !seen.Add(limit.DefName!));
         foreach (var limit in NeedLimits)
         {
-            limit.Threshold = Mathf.Clamp01(limit.Threshold);
+            limit.Threshold = float.IsNaN(limit.Threshold)
+                ? NeedLimit.DefaultThreshold
+                : Mathf.Clamp01(limit.Threshold);
         }
         if (DefName == null) FilterNeeds ??= false;
     }

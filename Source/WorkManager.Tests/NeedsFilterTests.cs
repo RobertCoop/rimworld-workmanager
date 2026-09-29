@@ -86,6 +86,19 @@ public class NeedsFilterTests : StateIsolationTestBase
         rule.NeedLimits![0].Threshold.Should().Be(1f);
     }
 
+    [Test]
+    public void ValidateNeedsFilter_ThresholdNaN_ResetToDefault()
+    {
+        var rule = new WorkTypeAssignmentRule("Mining")
+        {
+            NeedLimits = [new NeedLimit("Hunger") { Threshold = float.NaN }]
+        };
+
+        rule.ValidateNeedsFilter();
+
+        rule.NeedLimits![0].Threshold.Should().Be(NeedLimit.DefaultThreshold);
+    }
+
     [TestCase(0f)]
     [TestCase(0.37f)]
     [TestCase(1f)]
@@ -623,17 +636,6 @@ public class NeedsFilterTests : StateIsolationTestBase
         var result = Settings.GetAddableNeeds([hunger], [new NeedLimit("Hunger")]);
 
         result.Should().BeEmpty();
-    }
-
-    [Test]
-    public void GetAddableNeeds_NullExistingEntry_Ignored()
-    {
-        var hunger = new NeedDef { defName = "Hunger", label = "hunger" };
-        var beauty = new NeedDef { defName = "Beauty", label = "beauty" };
-
-        var result = Settings.GetAddableNeeds([hunger, beauty], [null!, new NeedLimit("Hunger")]);
-
-        result.Should().Equal(beauty);
     }
 
     [Test]

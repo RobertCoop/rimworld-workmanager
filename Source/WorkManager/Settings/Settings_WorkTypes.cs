@@ -289,7 +289,7 @@ public partial class Settings
         var present = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var limit in existing)
         {
-            if (limit?.DefName != null) present.Add(limit.DefName);
+            if (limit.DefName != null) present.Add(limit.DefName);
         }
         return all
             .Where(def => !def.playerMechsOnly &&
@@ -352,24 +352,22 @@ public partial class Settings
                             Common.Resources.Strings.Actions.Delete)
                     ], label, tooltip, ref limit.Threshold, 0f, 1f, 0.01f, null, out needsRect);
             }
-            if (removeIndex >= 0 && removeIndex < limits.Count) limits.RemoveAt(removeIndex);
-            var addable = GetAddableNeeds(DefProvider.Current.AllDefsListForReading<NeedDef>(),
-                limits);
-            if (addable.Count > 0)
+            if (removeIndex >= 0) limits.RemoveAt(removeIndex);
+            var addRect = Layout.GetTopRowRect(needsRect, Buttons.ActionButtonHeight, out needsRect);
+            contentHeight += addRect.height;
+            Buttons.DoActionButton(addRect, Common.Resources.Strings.Actions.Add, () =>
             {
-                var addRect = Layout.GetTopRowRect(needsRect, Labels.SectionHeaderHeight, out needsRect);
-                contentHeight += addRect.height;
-                Buttons.DoActionButton(addRect, Common.Resources.Strings.Actions.Add, () =>
-                {
-                    Find.WindowStack.Add(new FloatMenu([
-                        .. addable.Select(def => new FloatMenuOption(def.GetLabel(),
-                            () => { limits.Add(new NeedLimit(def)); })
-                        {
-                            tooltip = new TipSignal(def.description)
-                        })
-                    ]));
-                });
-            }
+                var addable = GetAddableNeeds(DefProvider.Current.AllDefsListForReading<NeedDef>(),
+                    limits);
+                if (addable.Count == 0) return;
+                Find.WindowStack.Add(new FloatMenu([
+                    .. addable.Select(def => new FloatMenuOption(def.GetLabel(),
+                        () => { limits.Add(new NeedLimit(def)); })
+                    {
+                        tooltip = new TipSignal(def.description)
+                    })
+                ]));
+            });
         }
         if (Event.current.type == EventType.Layout) _needsSectionContentHeight = contentHeight;
         return y;
