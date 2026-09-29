@@ -1,7 +1,7 @@
 {
   "sprint_id": "002-work-type-needs-filters",
   "branch": "sprint/002-work-type-needs-filters",
-  "phase": "impl",
+  "phase": "impl-review",
   "reviews": {
     "design": {
       "iteration": 2,
@@ -21,7 +21,7 @@
       }
     },
     "impl": {
-      "iteration": 1,
+      "iteration": 2,
       "verdicts": {
         "iter-01": {
           "quality": "CONCERNS",
@@ -37,8 +37,8 @@
     }
   },
   "created_at": "2026-09-29T00:00:00Z",
-  "updated_at": "2026-09-29T19:46:30Z",
-  "review_fixes_pending": "iter-01",
+  "updated_at": "2026-09-29T19:49:12Z",
+  "review_fixes_pending": null,
   "subsystems_touched": [],
   "new_subsystems": [],
   "escalations": [

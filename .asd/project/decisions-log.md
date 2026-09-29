@@ -190,3 +190,12 @@ Append-only. Never edited or removed. New entries appended below.
 - **Rationale**: All code fixes are local and remove code or avoid allocation. None adds an abstraction. The ADR-0002 amendment records a real constraint: NUnit loads test types at discovery, before the resolver runs. The "never ship the host" principle still holds because `bin/` is untracked.
 - **Follow-ups**: performance #2, a lazy or cached rule-summary tooltip in `DoWorkTypeRule`.
 - **Affected docs**: .asd/sprints/002-work-type-needs-filters/reviews/impl/iter-01/, .asd/sprints/002-work-type-needs-filters/state.json
+
+## 2026-09-29 — Sprint 002 impl fix for iter-01: findings resolved; enter impl-review iter 02
+
+- **Decision**: The impl fix for iter-01 of sprint 002-work-type-needs-filters is done: all iter-01 findings are resolved. `review_fixes_pending` is cleared and the sprint returns to impl-review, iteration 2.
+  - Code (commit a9f5154): quality #1 (NaN guard in `ValidateNeedsFilter`, with a test), quality #2 (Add row height uses `Buttons.ActionButtonHeight`), performance #1 (addable-needs list is built on click; the visibility check does not allocate), simplification #1–#3. The assembly was rebuilt in 29f5336. Build 0 warnings / 0 errors, tests 119/119 passed, format clean.
+  - Docs (commit 8aa1af8): documentation #1 (ADR-0002 amendment, linked from ADR-0006 / CA-5); #2 (the test-discovery fact lives in `NUnit-4.6.1.md`, and `RimWorld-1.6.md` and `LordKuper.Common-1.6.md` link to it); #3 (ADR-0008 tooltip route marked verified); #4 (`RimWorld-1.6.md` UI API section); #5 (trace chips).
+  - Performance #2: resolved by user decision as a follow-up (see the iter 01 entry).
+- **Rationale**: Every finding routed to fix mode has a matching commit, and the verification gate passes. Moving from impl to impl-review is the normal impl⇄impl-review cycle step, so no review counter is reset.
+- **Affected docs**: .asd/sprints/002-work-type-needs-filters/state.json
