@@ -248,3 +248,12 @@ Append-only. Never edited or removed. New entries appended below.
   - Documentation (three drifts below the severity floor, routed anyway): the architect aligns the docs with the code in the same round. (a) ADR-0008: the `GetAddableNeeds` parameter type is `IReadOnlyList`. (b) ADR-0008 / CA-4: name `HasAddableNeeds`. (c) ADR-0006: state that `ValidateNeedsFilter` resets NaN to the default.
 - **Rationale**: The code fix only deletes a line and adds no abstraction. The doc drifts are small, and fixing them in the same round keeps the ADRs as the source of truth without an extra iteration.
 - **Affected docs**: .asd/sprints/002-work-type-needs-filters/reviews/impl/iter-03/, .asd/sprints/002-work-type-needs-filters/state.json
+
+## 2026-09-29 — Sprint 002 impl fix for iter-03: findings resolved; enter impl-review iter 04
+
+- **Decision**: The impl fix for iter-03 of sprint 002-work-type-needs-filters is done: all iter-03 findings are resolved. `review_fixes_pending` is cleared and the sprint returns to impl-review, iteration 4.
+  - Code (commit 7fa925a): simplification #1. The unreachable `if (addable.Count == 0) return;` guard in the `DoRuleNeeds` Add click handler (`Settings_WorkTypes.cs`) is removed. No behaviour change. The assembly was rebuilt in 1812638.
+  - Docs (commit 70653c9): the three below-floor drifts are fixed. ADR-0008 uses the `IReadOnlyList` parameter type for `GetAddableNeeds` and names `HasAddableNeeds`; ADR-0006 states that `ValidateNeedsFilter` resets NaN to the default.
+  - Build 0 warnings / 0 errors, tests 124/124 passed, format clean.
+- **Rationale**: Every finding routed to fix mode has a matching commit, and the verification gate passes. Moving from impl to impl-review is the normal impl⇄impl-review cycle step, so no review counter is reset.
+- **Affected docs**: .asd/sprints/002-work-type-needs-filters/state.json, design ADR-0006, ADR-0008
