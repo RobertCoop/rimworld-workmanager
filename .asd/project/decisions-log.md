@@ -199,3 +199,23 @@ Append-only. Never edited or removed. New entries appended below.
   - Performance #2: resolved by user decision as a follow-up (see the iter 01 entry).
 - **Rationale**: Every finding routed to fix mode has a matching commit, and the verification gate passes. Moving from impl to impl-review is the normal impl⇄impl-review cycle step, so no review counter is reset.
 - **Affected docs**: .asd/sprints/002-work-type-needs-filters/state.json
+
+## 2026-09-29 — Sprint 002 impl-review iter 02: CONCERNS → impl fix
+
+- **Decision**: Impl-review iter 02 for sprint 002-work-type-needs-filters did not meet the DoD. No reviewer returned FAIL, so the findings go to autofix: the sprint returns to impl in fix mode (`review_fixes_pending: iter-02`).
+
+  | Reviewer | Verdict |
+  |---|---|
+  | quality | APPROVE |
+  | implementation | APPROVE |
+  | testing | APPROVE |
+  | ui | CONCERNS (1 medium) |
+  | simplification | APPROVE |
+  | documentation | CONCERNS (1 medium) |
+  | performance | APPROVE |
+  | external | APPROVE |
+
+- **Fix routing**: ui #1 and documentation #1 have the same root cause. The needs-filter Add button is always shown, but ADR-0008 and LordKuper.Common hide it when nothing can be added. Fix it in code, one dev: hide the Add button when there are no addable needs, and use a non-allocating check so the iter-01 performance fix #1 still holds. After the fix, ADR-0008 matches the code, so no doc change is needed.
+- **Dropped**: one quality low finding fell below the severity floor. The orchestrator checked it and found it to be a false positive, because `DefCache.Label` already falls back to `DefName`.
+- **Rationale**: A single local code change resolves both findings. It adds no abstraction and keeps the documented design (ADR-0008) as the source of truth.
+- **Affected docs**: .asd/sprints/002-work-type-needs-filters/reviews/impl/iter-02/, .asd/sprints/002-work-type-needs-filters/state.json
