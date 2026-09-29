@@ -78,13 +78,13 @@ The sprint is done when all of the following hold:
 - [ ] Build with the verified Linux command; 0 warnings, 0 errors. Commit.
 
 ### Task 4: Needs-filter strings and localization (ADR-0008) — owner: frontend-dev — AC-37, AC-40…AC-44, AC-49
-- [ ] Add 8 members to `Resources.Strings.Settings.WorkTypes`, keyed `LordKuper.WorkManager.Settings.WorkTypes.<Name>` with the nested `nameof` form: `NeedsLabel`, `NeedsTooltip`, `FilterNeedsLabel`, `FilterNeedsOnTooltip`, `FilterNeedsOffTooltip`, `NeedsEmptyLabel`, `NeedUnavailableLabel` (`{0}` = defName), `NeedUnavailableTooltip`. (AC-42)
-- [ ] Add `GetFilterNeedsTooltip(bool triState)` following the `GetAssignEveryoneTooltip` + `AppendUndefinedSettingTooltip` pattern. (AC-29)
-- [ ] Add the 8 keys to the 1.6 English `WorkManager_Keyed.xml`. `NeedsTooltip` makes the four AC-37 statements: disabled while any listed need is below its threshold; overrides "ensure worker assigned" and "minimum workers"; pawns without a listed need are unaffected; fast-changing needs (Beauty, Comfort, Food, Rest, Mood) may switch the work type on and off between updates. (AC-37, AC-43)
-- [ ] Reword the English `EnsureWorkerAssignedOnTooltip` and `MinWorkerNumberTooltip` to add that pawns blocked by the needs filter are never assigned, and `AvailablePawnsTooltip` to add that the needs filter is not applied to the preview. (AC-40, AC-41)
-- [ ] Add the 8 keys and the 3 rewordings to the 1.6 Russian and ChineseSimplified files as real translations, not English text. (AC-43, AC-49)
-- [ ] Do not touch any 1.1–1.5 language folder. (AC-44)
-- [ ] Check that each 1.6 locale has the same 55 `Settings.WorkTypes.*` keys. (AC-43)
+- [x] Add 8 members to `Resources.Strings.Settings.WorkTypes`, keyed `LordKuper.WorkManager.Settings.WorkTypes.<Name>` with the nested `nameof` form: `NeedsLabel`, `NeedsTooltip`, `FilterNeedsLabel`, `FilterNeedsOnTooltip`, `FilterNeedsOffTooltip`, `NeedsEmptyLabel`, `NeedUnavailableLabel` (`{0}` = defName), `NeedUnavailableTooltip`. (AC-42)
+- [x] Add `GetFilterNeedsTooltip(bool triState)` following the `GetAssignEveryoneTooltip` + `AppendUndefinedSettingTooltip` pattern. (AC-29)
+- [x] Add the 8 keys to the 1.6 English `WorkManager_Keyed.xml`. `NeedsTooltip` makes the four AC-37 statements: disabled while any listed need is below its threshold; overrides "ensure worker assigned" and "minimum workers"; pawns without a listed need are unaffected; fast-changing needs (Beauty, Comfort, Food, Rest, Mood) may switch the work type on and off between updates. (AC-37, AC-43)
+- [x] Reword the English `EnsureWorkerAssignedOnTooltip` and `MinWorkerNumberTooltip` to add that pawns blocked by the needs filter are never assigned, and `AvailablePawnsTooltip` to add that the needs filter is not applied to the preview. (AC-40, AC-41)
+- [x] Add the 8 keys and the 3 rewordings to the 1.6 Russian and ChineseSimplified files as real translations, not English text. (AC-43, AC-49)
+- [x] Do not touch any 1.1–1.5 language folder. (AC-44)
+- [x] Check that each 1.6 locale has the same 55 `Settings.WorkTypes.*` keys. (AC-43)
 - [ ] Build with the verified Linux command; 0 warnings, 0 errors. Commit.
 
 ### Task 5: Needs settings section and rule summary (ADR-0008) — owner: frontend-dev — AC-27…AC-40
