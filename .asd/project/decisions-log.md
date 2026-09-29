@@ -219,3 +219,11 @@ Append-only. Never edited or removed. New entries appended below.
 - **Dropped**: one quality low finding fell below the severity floor. The orchestrator checked it and found it to be a false positive, because `DefCache.Label` already falls back to `DefName`.
 - **Rationale**: A single local code change resolves both findings. It adds no abstraction and keeps the documented design (ADR-0008) as the source of truth.
 - **Affected docs**: .asd/sprints/002-work-type-needs-filters/reviews/impl/iter-02/, .asd/sprints/002-work-type-needs-filters/state.json
+
+## 2026-09-29 — Sprint 002 impl fix for iter-02: findings resolved; enter impl-review iter 03
+
+- **Decision**: The impl fix for iter-02 of sprint 002-work-type-needs-filters is done: all iter-02 findings are resolved. `review_fixes_pending` is cleared and the sprint returns to impl-review, iteration 3.
+  - Code (commit b7077ee): ui #1 and documentation #1 (same root cause). The needs-filter Add button is shown only when an addable need exists. The check uses the non-allocating `HasAddableNeeds` with a shared `IsAddableNeed` predicate, so the iter-01 performance fix #1 still holds. 5 new tests. The assembly was rebuilt in 8389d4d. Build 0 warnings / 0 errors, tests 124/124 passed, format clean.
+  - ADR-0008 now matches the code; no doc change was needed.
+- **Rationale**: Every finding routed to fix mode has a matching commit, and the verification gate passes. Moving from impl to impl-review is the normal impl⇄impl-review cycle step, so no review counter is reset.
+- **Affected docs**: .asd/sprints/002-work-type-needs-filters/state.json
