@@ -83,3 +83,73 @@ Append-only. Never edited or removed. New entries appended below.
 
 - **Decision**: sprint 001-full-audit-alignment completed + archived 2026-06-05; PR: https://github.com/LordKuper/rimworld-workmanager/pull/20. DoD met: build 0/0, 63 tests green, lint clean, impl-review iter-05 all APPROVE; MS-1/2/3 user-verified.
 
+
+## 2026-09-29 — Sprint 002-work-type-needs-filters scope approved
+
+- **Decision**: Scope for sprint 002-work-type-needs-filters approved (AskUserQuestion, relayed by orchestrator). Add a WorkManager-local needs filter to `WorkTypeAssignmentRule`, next to `AllowedWorkers`: any `NeedDef` can be added per work type, each with a 0–100% threshold; a pawn below any configured threshold gets the work type disabled (priority 0), re-checked on every WorkManager update; UI-editable, saved/loaded, merged with the default rule. Needs block is absolute (`EnsureWorkerAssigned`/`MinWorkerNumber` do not override it). No shipped default rules (user configures Mining with Outdoors + Beauty). Research of RimWorld 1.6 needs mechanics and related mods is required as design background. Slug kept: 002-work-type-needs-filters.
+- **Rationale**: User answers: Q1 "WorkManager-local (Recommended)" (LordKuper.Common is not editable from this repo); Q2 "Below threshold (Recommended)"; Q3 "Any need, no defaults"; Q4 "Disable work type (Recommended)"; Q5 "Needs block absolute"; Q7 keep slug; approval "Approve".
+- **Affected docs**: .asd/sprints/002-work-type-needs-filters/sprint.md, .asd/sprints/002-work-type-needs-filters/state.json
+
+## 2026-09-29 — Sprint 002 audit approved
+
+- **Decision**: `.asd/sprints/002-work-type-needs-filters/audit.md` approved by the user (AskUserQuestion, relayed by orchestrator; answer "Approve"). Sprint 002 audit phase exit criteria met.
+- **Rationale**: Merged BA + architect audit covers RimWorld 1.6 needs mechanics, the current `WorkTypeAssignmentRule`/`IsAllowedWorker` evaluation path, and gaps G-1..G-n for the needs filter.
+- **Affected docs**: .asd/sprints/002-work-type-needs-filters/audit.md
+
+## 2026-09-29 — Sprint 002 G-3: dedicated-worker fail-safe excludes need-blocked pawns only
+
+- **Decision**: Resolve G-3 with option (a). The `AssignDedicatedWorkersForDay` fail-safe (`WorkPriorityUpdater.cs` l.279-288) must skip pawns that fail the needs filter. Its existing behaviour for `AllowedWorkers` stays unchanged. User answer: "Exclude need-blocked only (Recommended)".
+- **Rationale**: This enforces the absolute needs block (scope decision 5) with the smallest blast radius, and it keeps the AC "existing default rules behave exactly as before". Option (b), restricting the fail-safe to allowed workers, fixes the latent `AllowedWorkers` bypass and is recorded as a follow-up outside this sprint.
+- **Affected docs**: .asd/sprints/002-work-type-needs-filters/audit.md
+
+## 2026-09-29 — Sprint 002: needs filter uses a stateless threshold (no hysteresis)
+
+- **Decision**: No hysteresis. The needs filter is a stateless per-need threshold check (level < threshold → blocked), re-evaluated on each WorkManager update.
+- **Rationale**: The user asked to "Look at how other similar filters work - add hysteresis if others do". Verification found that no similar existing filter uses hysteresis, so the needs filter follows the existing stateless pattern.
+- **Affected docs**: .asd/sprints/002-work-type-needs-filters/sprint.md
+
+## 2026-09-29 — Sprint 002 design phase completed: PRD + 3 ADRs approved, UX/design-system skipped
+
+- **Decision**: Design phase for sprint 002-work-type-needs-filters is complete, and the sprint advances to design-review. Drafts produced:
+  - `design/prd.html`: 5 goals, 8 stories, 49 ACs, 9 non-goals. User approved D1–D9 at the recommended options. D2: the preview stays unchanged and gets a tooltip. D5: the agent translates ru/zh. D7: the default threshold is 50%. AC-30 was amended to use Common's shared "Add" string.
+  - `design/adr.html`: ADR-0006 covers the data model and evaluation, with a scoped exception to the PawnFilter convention. ADR-0007 makes the fail-safe exclude need-blocked pawns. ADR-0008 builds the settings UI from Common's public API only and covers localization. User answers: Complication Approval CA-1..CA-5 "Approve all (Recommended)"; "Add" label "Reuse "Add" (Recommended)"; ADR split "Approve, 3 ADRs (Recommended)".
+  - UX-spec and design-system: SKIPPED.
+  - No C4 changes (subsystem decomposition is disabled). No new tech-reference.
+- **Rationale**: The user answered "clone the lordkuper.common repo in a separate directory and look at it", so LordKuper.Common was inspected. It is cloned at ../rimworld-common. Common's decisions-log shows that its sprint 004, an IMGUI widget sprint, skipped UX-spec and design-system with the reason "IMGUI library, no web UI". This sprint follows that precedent. All approvals were collected via AskUserQuestion and relayed by the orchestrator.
+- **Affected docs**: .asd/sprints/002-work-type-needs-filters/design/prd.html, .asd/sprints/002-work-type-needs-filters/design/adr.html, .asd/sprints/002-work-type-needs-filters/state.json
+
+## 2026-09-29 — Sprint 002 design-review iter 01: FAIL → user-approved autofix
+
+- **Decision**: Design-review iter 01 verdicts: documentation FAIL, simplification CONCERNS, external APPROVE, ui N/A (no ux-spec). The user approved autofix of all findings; the answer was "Apply all fixes (Recommended)" via AskUserQuestion, relayed by the orchestrator. Fixes applied:
+  - ADR: the build/test appendix was removed and replaced by a link to the audit.md Dependencies section (high, SSoT finding). A duplicate shell comment was removed. ADR-0006 now uses a single state check in the static `IsNeedBlocked` seam (simplification, medium).
+  - PRD: re-wrapped in the unmodified shell. AC-2, AC-3 and AC-27 are now traced to user stories. AC-45 now points to audit.md R-1..R-8.
+  - Documentation finding #6 (missing approval entries) needed no change. The 2026-09-29 "design phase completed" entry already resolves it; the reviewer read the log before that entry was written.
+  - Design-review advances to iteration 2.
+- **Rationale**: The fixes resolve the high SSoT finding and the medium simplification finding without changing scope or approved design decisions.
+- **Affected docs**: .asd/sprints/002-work-type-needs-filters/design/adr.html, .asd/sprints/002-work-type-needs-filters/design/prd.html, .asd/sprints/002-work-type-needs-filters/state.json
+
+## 2026-09-29 — Sprint 002 design-review iter 02: APPROVE — DoD met
+
+- **Decision**: Sprint 002 design-review iter 02: APPROVE — DoD met. Verdicts: documentation APPROVE, simplification APPROVE, external APPROVE, ui N/A (no ux-spec). There were 0 findings at the medium severity floor. The sprint advances to design-promote.
+- **Rationale**: Iteration trace:
+  - Iter-01: documentation FAIL on the ADR build/test appendix (SSoT). Simplification CONCERNS on the duplicated state check in ADR-0006. External APPROVE. Both findings were autofixed with user approval.
+  - Iter-02: every reviewer returned APPROVE with 0 findings at the medium floor, so the DoD is met.
+- **Affected docs**: .asd/sprints/002-work-type-needs-filters/design/adr.html, .asd/sprints/002-work-type-needs-filters/design/prd.html, .asd/sprints/002-work-type-needs-filters/state.json
+
+## 2026-09-29 — Sprint 002 design-promote confirmed: 3 ADRs, 2 tech-reference updates, new requirements.html
+
+- **Decision**: The final design-promote mutation for sprint 002-work-type-needs-filters is confirmed. User answer via AskUserQuestion, relayed by the orchestrator: "Confirm (Recommended)". Promoted to persistent `design/`:
+  - New, status accepted: `design/architecture/adr/adr-0006-needs-filter-model-and-evaluation.html` (NeedLimit entry type, tri-state `FilterNeeds` + `NeedLimits`, static `IsNeedBlocked` seam, scoped exception to the PawnFilter eligibility convention), `adr-0007-needs-block-absolute-in-failsafe.html` (the `AssignDedicatedWorkersForDay` fail-safe excludes need-blocked pawns only, G-3 option (a)), `adr-0008-needs-ui-summary-and-strings.html` (Needs section from Common's public API only, rule-summary Needs part, 8 new and 3 reworded keys in the three 1.6 locales).
+  - Updated: `design/architecture/tech-reference/RimWorld-1.6.md` gains a Needs section (Need/NeedDef/`pawn.needs` API, level semantics, Outdoors and Beauty tables, settings-load-before-defs convention) and fixes the localization key-naming convention to document the `LordKuper.WorkManager.Settings.WorkTypes.*` form (D-2).
+  - Updated: `design/architecture/tech-reference/LordKuper.Common-1.6.md` records the PawnFilter-convention exception (ADR-0006, D-3), the `DefCache` lazy-resolve latch, the `DefProvider.Current` test seam, the public vs internal UI helpers, and the verified build version 1.6.4.2.
+  - New: `design/product/requirements.html`, the first persistent requirements doc, with feature set NF (work-type needs filter) and 45 durable acceptance criteria (NF-AC-n, mapped to sprint AC-n).
+  - Subsystem decomposition is disabled: no new subsystems, no C4 changes, no DESIGN.md.
+- **Rationale**: The design drafts passed design-review iteration 2 with every reviewer at APPROVE. Promotion makes the as-built decisions, research and requirements persistent before planning.
+- **Follow-ups** (non-blocking, raised by BA, left unchanged this sprint): (1) `design/product/concept.html`, the "Guaranteed coverage" pillar is now qualified by the opt-in needs filter (an absolute block can leave a work type without workers); the concept text does not say so yet. (2) `concept.html` frontmatter `delegates_to` names `requirements/` while the promoted doc is the single file `requirements.html` (cosmetic).
+- **Affected docs**: design/architecture/adr/adr-0006-needs-filter-model-and-evaluation.html, design/architecture/adr/adr-0007-needs-block-absolute-in-failsafe.html, design/architecture/adr/adr-0008-needs-ui-summary-and-strings.html, design/architecture/tech-reference/RimWorld-1.6.md, design/architecture/tech-reference/LordKuper.Common-1.6.md, design/product/requirements.html, .asd/sprints/002-work-type-needs-filters/state.json
+
+## 2026-09-29 — Plan approved for sprint 002-work-type-needs-filters
+
+- **Decision**: `.asd/sprints/002-work-type-needs-filters/plan.md` is approved. User answers via AskUserQuestion, relayed by the orchestrator after it presented the full task table and DoD summary: tests "Separate test task (Recommended)"; plan "Approve". The plan has 8 tasks: data model and persistence (backend-dev), evaluation (backend-dev), fail-safe absolute block (backend-dev), strings and localization (frontend-dev), Needs settings section and rule summary (frontend-dev), unit tests (test-engineer), manual in-game verification MS-1…MS-5 (authored by test-engineer, run by the user in RimWorld), and a verification gate (backend-dev). Together they trace AC-1…AC-49.
+- **Rationale**: A separate test task keeps one owner for the FluentAssertions and static-isolation rules and builds the shared `FakeDefProvider` once, following the sprint 001 layout. The DoD records the Linux/WSL build reality: SDK 10 at `/tmp/dotnet10` with `RIMWORLD_DIR`/`LORDKUPER_COMMON_DIR` overrides, tests through the Windows NUnit console (baseline 63/63), jb run or skip recorded, and the rebuilt tracked `1.6/Assemblies` output committed as `build: rebuild mod assembly`.
+- **Affected docs**: .asd/sprints/002-work-type-needs-filters/plan.md
