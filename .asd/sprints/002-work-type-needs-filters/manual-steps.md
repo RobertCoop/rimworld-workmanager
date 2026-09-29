@@ -67,11 +67,11 @@ On Windows, substitute `%USERPROFILE%` with your actual user folder (e.g., `C:\U
 
 | ID | Title | Blocks | Performed by | Status |
 |---|---|---|---|---|
-| MS-1 | Persistence and load-before-defs | Task 7 (setup) | user | pending |
-| MS-2 | Live evaluation and recovery | Task 7 (setup) | user | pending |
-| MS-3 | Fail-safe absolute block | Task 7 (setup) | user | pending |
-| MS-4 | Settings UI and summary | Task 7 (setup) | user | pending |
-| MS-5 | Russian and ChineseSimplified display | Task 7 (setup) | user | pending |
+| MS-1 | Persistence and load-before-defs | Task 7 (setup) | user | done (verified by user 2026-09-29) |
+| MS-2 | Live evaluation and recovery | Task 7 (setup) | user | done (verified by user 2026-09-29) |
+| MS-3 | Fail-safe absolute block | Task 7 (setup) | user | done (verified by user 2026-09-29) |
+| MS-4 | Settings UI and summary | Task 7 (setup) | user | done (verified by user 2026-09-29) |
+| MS-5 | Russian and ChineseSimplified display | Task 7 (setup) | user | done (verified by user 2026-09-29) |
 
 ---
 
@@ -81,7 +81,7 @@ On Windows, substitute `%USERPROFILE%` with your actual user folder (e.g., `C:\U
 - **Why**: AC-9 (load path reads only defName/threshold), AC-10 (ValidateNeedsFilter on LoadingVars), AC-11 (defName persisted not `.Def`), AC-12 (null list and unresolved entries handled safely)
 - **When**: After Task 5 is built; before playing a full session
 - **Performed by**: user (manual in-game verification)
-- **Status**: pending
+- **Status**: done (verified by user 2026-09-29)
 
 ### Scenario: Mining + Outdoors/Beauty
 
@@ -176,7 +176,7 @@ This scenario tests persistence across a save/load cycle and that the filter res
 - **Why**: AC-13 (seam is evaluated every update), AC-16 (missing need passes), AC-17 (below threshold blocks), AC-22 (priority 0 is default), AC-23 (no errors when pawn lacks configured need)
 - **When**: After Task 5 is built; during an active game session
 - **Performed by**: user (manual gameplay observation)
-- **Status**: pending
+- **Status**: done (verified by user 2026-09-29)
 
 ### Scenario: Outdoors threshold blocks Mining on demand
 
@@ -222,7 +222,7 @@ This scenario tests that the needs filter evaluates live (re-checked every updat
 - **Why**: AC-24 (fail-safe excludes need-blocked only), AC-25 (EnsureWorkerAssigned + MinWorkerNumber never assign need-blocked), AC-26 (compatible with pre-sprint; identical candidates/priorities when needs filter is Off/empty)
 - **When**: After Task 5 is built; during an active game session with dedicated workers enabled
 - **Performed by**: user (manual gameplay verification)
-- **Status**: pending
+- **Status**: done (verified by user 2026-09-29)
 
 ### Scenario: Mining dedicated worker with EnsureWorkerAssigned, all candidates need-blocked
 
@@ -274,7 +274,7 @@ This scenario tests that the fail-safe (in `AssignDedicatedWorkersForDay`) respe
 - **Why**: AC-27..41 (Needs section placement, state control, add button, entry rows, empty state, summary, tooltip changes)
 - **When**: After Task 5 is built; during an active game session
 - **Performed by**: user (manual UI inspection and interaction)
-- **Status**: pending
+- **Status**: done (verified by user 2026-09-29)
 
 ### UI presence and placement
 
@@ -382,7 +382,7 @@ This scenario tests that the fail-safe (in `AssignDedicatedWorkersForDay`) respe
 - **Why**: AC-43 (all 1.6 locales have same 55 Settings.WorkTypes keys), AC-49 (Russian and ChineseSimplified strings are real translations, not English)
 - **When**: After Task 5 is built and all 8 new + 3 reworded keys are in all 1.6 locale files
 - **Performed by**: user (manual language switching and inspection)
-- **Status**: pending
+- **Status**: done (verified by user 2026-09-29)
 
 ### Russian locale test
 

@@ -117,11 +117,11 @@ The sprint is done when all of the following hold:
 - [x] Register `MS-3` (fail-safe): with schedule-aware dedicated workers off, Mining in a dedicated mode with EnsureWorkerAssigned on and MinWorkerNumber ≥ 1, and every candidate need-blocked, no pawn gets the Mining dedicated priority; with the needs filter Off, assignments match the pre-sprint behaviour. (AC-24, AC-25, AC-26)
 - [x] Register `MS-4` (settings UI): Needs section placement next to Allowed workers on the default and work-type rules; state control Inherit/Off/On vs Off/On with the undefined-setting tooltip; Add opens the sorted need menu (includes Mood and RoomSize, excludes Authority and already-added needs) with description tooltips; new entry at 50%; slider 0–100% in 1% steps; remove works; empty-state text; Needs tooltip; rule summary Needs part for Inherit/Off/On/empty; Available pawns tooltip and the reworded EnsureWorkerAssigned/MinWorkerNumber tooltips; changes apply without restart. (AC-27…AC-41)
 - [x] Register `MS-5` (locales): switch the game to Russian, then ChineseSimplified; every Needs-section string, tooltip and summary line is translated and no raw key is shown. (AC-43, AC-49)
-- [ ] MS-1 verified by the user (persistence, load before defs, unresolved entry).
-- [ ] MS-2 verified by the user (live evaluation and recovery).
-- [ ] MS-3 verified by the user (fail-safe absolute block).
-- [ ] MS-4 verified by the user (settings UI and summary).
-- [ ] MS-5 verified by the user (Russian and ChineseSimplified display).
+- [x] MS-1 verified by the user (persistence, load before defs, unresolved entry).
+- [x] MS-2 verified by the user (live evaluation and recovery).
+- [x] MS-3 verified by the user (fail-safe absolute block).
+- [x] MS-4 verified by the user (settings UI and summary).
+- [x] MS-5 verified by the user (Russian and ChineseSimplified display).
 
 ### Task 8: Verification gate — owner: backend-dev — AC-43, AC-44, AC-45, AC-46, AC-47
 - [x] Confirm `/tmp/dotnet10/dotnet --version` reports SDK 10; if `/tmp` was cleared, reinstall with `dotnet-install.sh --channel 10.0 --install-dir /tmp/dotnet10` (audit.md Dependencies).
