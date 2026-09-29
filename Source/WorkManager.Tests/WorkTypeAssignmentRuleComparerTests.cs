@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using LordKuper.WorkManager.Helpers;
 
 namespace LordKuper.WorkManager.Tests;
@@ -254,5 +255,75 @@ public class WorkTypeAssignmentRuleComparerTests
         var rule = new WorkTypeAssignmentRule("Cleaning");
         var result = comparer.Compare(rule, rule);
         result.Should().Be(0);
+    }
+
+    /// <summary>
+    ///     Tests that Combine correctly merges needs filter state and entries.
+    ///     When main has Inherit (null) FilterNeeds, fallback's state and entries are used.
+    /// </summary>
+    [Test]
+    public void Combine_MergesNeedsFilter_InheritTakesFallback()
+    {
+        var main = new WorkTypeAssignmentRule("Mining")
+        {
+            FilterNeeds = null,
+            NeedLimits = []
+        };
+        var fallback = new WorkTypeAssignmentRule(null)
+        {
+            FilterNeeds = true,
+            NeedLimits = new List<NeedLimit> { new("Hunger") { Threshold = 0.5f } }
+        };
+
+        var combined = WorkTypeAssignmentRule.Combine(main, fallback);
+
+        combined.FilterNeeds.Should().Be(true);
+        combined.NeedLimits.Should().HaveCount(1);
+        combined.NeedLimits[0].DefName.Should().Be("Hunger");
+    }
+
+    /// <summary>
+    ///     Tests that Combine produces a shallow copy of the entries list, not a shared reference.
+    /// </summary>
+    [Test]
+    public void Combine_NeedsEntries_ShallowCopy()
+    {
+        var main = new WorkTypeAssignmentRule("Mining")
+        {
+            FilterNeeds = null
+        };
+        var fallback = new WorkTypeAssignmentRule(null)
+        {
+            FilterNeeds = true,
+            NeedLimits = new List<NeedLimit> { new("Hunger") { Threshold = 0.5f } }
+        };
+
+        var combined = WorkTypeAssignmentRule.Combine(main, fallback);
+
+        combined.NeedLimits.Should().NotBeSameAs(fallback.NeedLimits);
+        combined.NeedLimits.Should().HaveCount(fallback.NeedLimits!.Count);
+    }
+
+    /// <summary>
+    ///     Tests that Combine uses main's needs filter when it is explicitly set (not Inherit).
+    /// </summary>
+    [Test]
+    public void Combine_MergesNeedsFilter_ExplicitTakesMain()
+    {
+        var main = new WorkTypeAssignmentRule("Mining")
+        {
+            FilterNeeds = false,
+            NeedLimits = []
+        };
+        var fallback = new WorkTypeAssignmentRule(null)
+        {
+            FilterNeeds = true,
+            NeedLimits = new List<NeedLimit> { new("Hunger") { Threshold = 0.5f } }
+        };
+
+        var combined = WorkTypeAssignmentRule.Combine(main, fallback);
+
+        combined.FilterNeeds.Should().Be(false);
+        combined.NeedLimits.Should().BeEmpty();
     }
 }
