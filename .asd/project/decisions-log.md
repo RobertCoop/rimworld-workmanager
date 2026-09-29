@@ -227,3 +227,24 @@ Append-only. Never edited or removed. New entries appended below.
   - ADR-0008 now matches the code; no doc change was needed.
 - **Rationale**: Every finding routed to fix mode has a matching commit, and the verification gate passes. Moving from impl to impl-review is the normal impl⇄impl-review cycle step, so no review counter is reset.
 - **Affected docs**: .asd/sprints/002-work-type-needs-filters/state.json
+
+## 2026-09-29 — Sprint 002 impl-review iter 03: CONCERNS → impl fix
+
+- **Decision**: Impl-review iter 03 for sprint 002-work-type-needs-filters did not meet the DoD. No reviewer returned FAIL, so the findings go to autofix: the sprint returns to impl in fix mode (`review_fixes_pending: iter-03`).
+
+  | Reviewer | Verdict |
+  |---|---|
+  | quality | APPROVE |
+  | implementation | APPROVE |
+  | testing | APPROVE |
+  | ui | APPROVE |
+  | simplification | CONCERNS (1 critical) |
+  | documentation | APPROVE |
+  | performance | APPROVE |
+  | external | APPROVE |
+
+- **Fix routing**:
+  - Simplification #1 (critical, checklist item "defensive code for impossible-by-contract case"): one dev removes the unreachable `if (addable.Count == 0) return;` in the `DoRuleNeeds` Add click handler (`Settings_WorkTypes.cs`). The button is drawn only when `HasAddableNeeds` is true, and the action runs synchronously in the same `OnGUI` call with the same inputs and the same `IsAddableNeed` predicate, so the list can never be empty there. No behaviour change.
+  - Documentation (three drifts below the severity floor, routed anyway): the architect aligns the docs with the code in the same round. (a) ADR-0008: the `GetAddableNeeds` parameter type is `IReadOnlyList`. (b) ADR-0008 / CA-4: name `HasAddableNeeds`. (c) ADR-0006: state that `ValidateNeedsFilter` resets NaN to the default.
+- **Rationale**: The code fix only deletes a line and adds no abstraction. The doc drifts are small, and fixing them in the same round keeps the ADRs as the source of truth without an extra iteration.
+- **Affected docs**: .asd/sprints/002-work-type-needs-filters/reviews/impl/iter-03/, .asd/sprints/002-work-type-needs-filters/state.json
