@@ -165,3 +165,28 @@ Append-only. Never edited or removed. New entries appended below.
 - **Decision**: Impl assessment for sprint 002-work-type-needs-filters is approved. User answer via AskUserQuestion, relayed by the orchestrator: "Approve". The user reported the in-game checks verbatim: "Everything passed as expected. Continue the sprint until completion." MS-1…MS-5 in `manual-steps.md` are marked `done` (verified by user 2026-09-29), the Task 7 user-verification subtasks in `plan.md` are ticked, and the `manual-steps` escalation in `state.json` is resolved. The sprint advances to impl-review, iteration 1.
 - **Rationale**: Impl summary: Tasks 1–8 done; AC-1…AC-49 covered; build 0 warnings / 0 errors; tests 119/119 passed; format clean; jb skipped (unavailable); MS-1…MS-5 passed in RimWorld 1.6; commits 671c59e..c992cca. The impl completion gate is met.
 - **Affected docs**: .asd/sprints/002-work-type-needs-filters/manual-steps.md, .asd/sprints/002-work-type-needs-filters/plan.md, .asd/sprints/002-work-type-needs-filters/state.json
+
+## 2026-09-29 — Sprint 002 impl-review iter 01: FAIL/CONCERNS → impl fix
+
+- **Decision**: Impl-review iter 01 for sprint 002-work-type-needs-filters did not meet the DoD. The sprint returns to impl in fix mode (`review_fixes_pending: iter-01`).
+
+  | Reviewer | Verdict |
+  |---|---|
+  | quality | CONCERNS (2 low) |
+  | implementation | APPROVE |
+  | testing | APPROVE |
+  | ui | APPROVE |
+  | simplification | CONCERNS (2 critical checklist hits, 1 low) |
+  | documentation | FAIL (1 high, 2 medium, 2 low) |
+  | performance | CONCERNS (1 medium, 1 low) |
+  | external | APPROVE |
+
+  User decisions via AskUserQuestion, relayed by the orchestrator:
+  - Documentation #1 (high: `CopyRimWorldTestDeps` reverses a rejected alternative of ADR-0002): "Keep copy, amend ADR-0002 (Recommended)". The target stays. It copies only into the gitignored test `bin/` and is never committed or shipped, the same approach as LordKuper.Common's test csproj. The Architect amends ADR-0002 in this sprint.
+  - Fix scope: "Apply all (Recommended)". Performance #2 (low, per-frame `Description` rebuild) was excluded: it existed before this sprint, and the fix would add caching state. It is resolved by user decision as a follow-up.
+- **Fix routing**:
+  - Code, one dev: quality #1 (NaN guard in `ValidateNeedsFilter`, plus a test) and #2 (Add row height uses `Buttons.ActionButtonHeight`); simplification #1 (drop the `limit?.` guard in `GetAddableNeeds` and its obsolete test), #2 (drop the `removeIndex < limits.Count` check) and #3 (use `DefCache.Label` fallback in the summary); performance #1 (build the addable-needs list on click, and use a non-allocating visibility check).
+  - Docs, Architect: documentation #1 (amend ADR-0002; ADR-0006 test approach / CA-5 link to it), #2 (test-discovery fact kept in one tech reference, the others link to it), #3 (ADR-0008 tooltip route verified as `TipSignal`), #4 (`RimWorld-1.6.md` UI API subsection) and #5 (ADR-0006 / ADR-0008 `satisfies` trace chips).
+- **Rationale**: All code fixes are local and remove code or avoid allocation. None adds an abstraction. The ADR-0002 amendment records a real constraint: NUnit loads test types at discovery, before the resolver runs. The "never ship the host" principle still holds because `bin/` is untracked.
+- **Follow-ups**: performance #2, a lazy or cached rule-summary tooltip in `DoWorkTypeRule`.
+- **Affected docs**: .asd/sprints/002-work-type-needs-filters/reviews/impl/iter-01/, .asd/sprints/002-work-type-needs-filters/state.json
