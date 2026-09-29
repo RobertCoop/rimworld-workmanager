@@ -5,6 +5,7 @@ using JetBrains.Annotations;
 using LordKuper.Common.Cache;
 using LordKuper.Common.Filters;
 using LordKuper.Common.Helpers;
+using RimWorld;
 using UnityEngine;
 using Verse;
 using PawnHealthState = LordKuper.Common.Filters.PawnHealthState;
@@ -79,6 +80,18 @@ internal class WorkTypeAssignmentRule : DefCache<WorkTypeDef>, IExposable
     public int MinWorkerNumber;
 
     /// <summary>
+    ///     Indicates whether the needs filter is applied: <c>null</c> inherits from the default rule, <c>false</c> is off,
+    ///     <c>true</c> is on.
+    /// </summary>
+    public bool? FilterNeeds;
+
+    /// <summary>
+    ///     The need thresholds. While the filter is on, a pawn below any threshold is not assigned this work type.
+    ///     Nullable because <see cref="Verse.Scribe_Collections" /> sets this to null when loading older settings.
+    /// </summary>
+    public List<NeedLimit>? NeedLimits = [];
+
+    /// <summary>
     ///     Initializes a new instance of the <see cref="WorkTypeAssignmentRule" /> class.
     /// </summary>
     [UsedImplicitly]
@@ -121,6 +134,7 @@ internal class WorkTypeAssignmentRule : DefCache<WorkTypeDef>, IExposable
                 CapablePawnRatioFactor = 1f
             },
             AssignEveryone = null,
+            FilterNeeds = false,
             AssignEveryonePriority = 1,
             EnsureWorkerAssigned = true,
             MinWorkerNumber = 1
@@ -405,6 +419,9 @@ internal class WorkTypeAssignmentRule : DefCache<WorkTypeDef>, IExposable
         Scribe_Values.Look(ref EnsureWorkerAssigned, nameof(EnsureWorkerAssigned));
         Scribe_Values.Look(ref MinWorkerNumber, nameof(MinWorkerNumber));
         Scribe_Deep.Look(ref DedicatedWorkerSettings, nameof(DedicatedWorkerSettings));
+        Scribe_Values.Look(ref FilterNeeds, nameof(FilterNeeds));
+        Scribe_Collections.Look(ref NeedLimits, nameof(NeedLimits), LookMode.Deep);
+        if (Scribe.mode == LoadSaveMode.LoadingVars) ValidateNeedsFilter();
     }
 
     /// <summary>
@@ -431,8 +448,11 @@ internal class WorkTypeAssignmentRule : DefCache<WorkTypeDef>, IExposable
     {
         if (main == null) throw new ArgumentNullException(nameof(main));
         if (fallback == null) throw new ArgumentNullException(nameof(fallback));
+        var needsSource = main.FilterNeeds.HasValue ? main : fallback;
         return new WorkTypeAssignmentRule(main.DefName)
         {
+            FilterNeeds = needsSource.FilterNeeds,
+            NeedLimits = [.. needsSource.NeedLimits ?? []],
             EnsureWorkerAssigned = main.EnsureWorkerAssigned ?? fallback.EnsureWorkerAssigned,
             MinWorkerNumber = main.EnsureWorkerAssigned.HasValue
                 ? main.MinWorkerNumber
@@ -465,7 +485,9 @@ internal class WorkTypeAssignmentRule : DefCache<WorkTypeDef>, IExposable
             DedicatedWorkerSettings = new DedicatedWorkerSettings
             {
                 TriStateMode = workTypeDefName != null
-            }
+            },
+            FilterNeeds = workTypeDefName == null ? false : null,
+            NeedLimits = []
         };
     }
 
@@ -555,12 +577,30 @@ internal class WorkTypeAssignmentRule : DefCache<WorkTypeDef>, IExposable
     }
 
     /// <summary>
+    ///     Normalizes the needs filter: creates the list, drops empty and duplicate entries, clamps thresholds and sets the
+    ///     default rule's state. Reads only def names and thresholds, so it is safe before defs are loaded.
+    /// </summary>
+    internal void ValidateNeedsFilter()
+    {
+        NeedLimits ??= [];
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        NeedLimits.RemoveAll(limit =>
+            limit == null || string.IsNullOrEmpty(limit.DefName) || !seen.Add(limit.DefName!));
+        foreach (var limit in NeedLimits)
+        {
+            limit.Threshold = Mathf.Clamp01(limit.Threshold);
+        }
+        if (DefName == null) FilterNeeds ??= false;
+    }
+
+    /// <summary>
     ///     Validates and normalizes the rule's settings, ensuring all values are within allowed ranges.
     /// </summary>
     private void Validate()
     {
         var defaultRule = GetDefaultRule(DefName);
         DedicatedWorkerSettings ??= new DedicatedWorkerSettings();
+        ValidateNeedsFilter();
         AllowedWorkers ??= new PawnFilter();
         AllowedWorkers.Validate();
         AllowedWorkers.ForbiddenPawnTypes = [.. AllowedWorkersForbiddenPawnTypes];
