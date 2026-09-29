@@ -257,3 +257,21 @@ Append-only. Never edited or removed. New entries appended below.
   - Build 0 warnings / 0 errors, tests 124/124 passed, format clean.
 - **Rationale**: Every finding routed to fix mode has a matching commit, and the verification gate passes. Moving from impl to impl-review is the normal impl⇄impl-review cycle step, so no review counter is reset.
 - **Affected docs**: .asd/sprints/002-work-type-needs-filters/state.json, design ADR-0006, ADR-0008
+
+## 2026-09-29 — Sprint 002 impl-review iter 04: APPROVE — DoD met
+
+- **Decision**: Impl-review iter 04 for sprint 002-work-type-needs-filters meets the DoD. The user approved the final impl-review gate via AskUserQuestion ("Proceed to PR"), so the sprint advances to the pr phase.
+
+  | Reviewer | Verdict |
+  |---|---|
+  | quality | APPROVE |
+  | implementation | APPROVE |
+  | testing | APPROVE |
+  | ui | APPROVE (below-floor finding dropped) |
+  | simplification | APPROVE |
+  | documentation | APPROVE |
+  | performance | APPROVE |
+  | external | APPROVE |
+
+- **Rationale**: The ui reviewer returned CONCERNS with a single `medium` finding. That is below the iter-04 `high` severity floor (`review-policy.md`), so it does not count toward the gate. It is also a false positive: Common's `DefCache.Label` returns the defName when the def is unresolved, so the rule summary already shows the defName (AC-39). The orchestrator checked this in the Common source and the workshop DLL. All other reviewers returned APPROVE. Advancing from impl-review to pr moves forward, so no review counter is reset.
+- **Affected docs**: .asd/sprints/002-work-type-needs-filters/reviews/impl/iter-04/, .asd/sprints/002-work-type-needs-filters/state.json
