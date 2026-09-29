@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using LordKuper.Common;
 using LordKuper.Common.Filters;
 using LordKuper.Common.Helpers;
 using LordKuper.Common.UI;
 using LordKuper.Common.UI.Widgets;
+using RimWorld;
 using UnityEngine;
 using Verse;
 using Strings = LordKuper.WorkManager.Resources.Strings.Settings.WorkTypes;
@@ -109,6 +111,11 @@ public partial class Settings
     ///     Cached height of the assignment section content.
     /// </summary>
     private float _assignmentSectionContentHeight;
+
+    /// <summary>
+    ///     Cached height of the needs section content.
+    /// </summary>
+    private float _needsSectionContentHeight;
 
     /// <summary>
     ///     Cached height of the dedicated workers section content.
@@ -268,6 +275,107 @@ public partial class Settings
     }
 
     /// <summary>
+    ///     Gets the needs that can still be added to a needs filter, in menu order.
+    /// </summary>
+    /// <param name="all">All known need definitions.</param>
+    /// <param name="existing">The need limits already present; their def names are excluded.</param>
+    /// <returns>
+    ///     The addable needs, excluding mechanoid-only needs, the Authority need and already listed needs, sorted by
+    ///     list priority (descending) and then by label.
+    /// </returns>
+    internal static List<NeedDef> GetAddableNeeds(IEnumerable<NeedDef> all,
+        IReadOnlyCollection<NeedLimit> existing)
+    {
+        var present = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var limit in existing)
+        {
+            if (limit?.DefName != null) present.Add(limit.DefName);
+        }
+        return all
+            .Where(def => !def.playerMechsOnly &&
+                          !string.Equals(def.defName, "Authority", StringComparison.Ordinal) &&
+                          !present.Contains(def.defName))
+            .OrderByDescending(def => def.listPriority)
+            .ThenBy(def => def.GetLabel(), StringComparer.CurrentCulture)
+            .ToList();
+    }
+
+    /// <summary>
+    ///     Renders the needs filter section of the selected work type rule.
+    /// </summary>
+    /// <param name="rect">The rectangle within which the section is rendered.</param>
+    /// <param name="defaultRule">Whether the selected rule is the default rule (two-state) or a work type rule.</param>
+    /// <param name="remRect">When this method returns, contains the remaining rectangle after the section.</param>
+    /// <returns>The vertical offset after rendering the section.</returns>
+    private float DoRuleNeeds(Rect rect, bool defaultRule, out Rect remRect)
+    {
+        var rule = SelectedWorkTypeRule!;
+        var y = Sections.DoLabeledSectionBox(rect, _needsSectionContentHeight, Strings.NeedsLabel,
+            Strings.NeedsTooltip, out var needsRect, out remRect);
+        var contentHeight = 0f;
+        if (defaultRule)
+        {
+            var value = rule.FilterNeeds == true;
+            contentHeight += Fields.DoLabeledCheckbox(needsRect, 0, null, ref value,
+                Strings.FilterNeedsLabel, Strings.GetFilterNeedsTooltip(false), null,
+                out needsRect);
+            rule.FilterNeeds = value;
+        }
+        else
+        {
+            contentHeight += Fields.DoLabeledCheckbox(needsRect, 0, null, ref rule.FilterNeeds,
+                Strings.FilterNeedsLabel, Strings.GetFilterNeedsTooltip(true), null,
+                out needsRect);
+        }
+        if (rule.FilterNeeds == true)
+        {
+            var limits = rule.NeedLimits ??= [];
+            if (limits.Count == 0)
+            {
+                var emptyRect = Layout.GetTopRowRect(needsRect, Labels.LabelHeight, out needsRect);
+                Labels.DoLabel(emptyRect, Strings.NeedsEmptyLabel, TextAnchor.MiddleLeft);
+                contentHeight += emptyRect.height;
+            }
+            var removeIndex = -1;
+            for (var i = 0; i < limits.Count; i++)
+            {
+                var limit = limits[i];
+                var index = i;
+                var resolved = limit.Def != null;
+                var label = resolved
+                    ? limit.Label ?? limit.DefName!
+                    : string.Format(Strings.NeedUnavailableLabel, limit.DefName);
+                var tooltip = resolved ? limit.Def!.description : Strings.NeedUnavailableTooltip;
+                contentHeight += Fields.DoLabeledPercentSlider(needsRect, 1,
+                    [
+                        new IconButton(TexUI.DismissTex, () => { removeIndex = index; },
+                            Common.Resources.Strings.Actions.Delete)
+                    ], label, tooltip, ref limit.Threshold, 0f, 1f, 0.01f, null, out needsRect);
+            }
+            if (removeIndex >= 0 && removeIndex < limits.Count) limits.RemoveAt(removeIndex);
+            var addable = GetAddableNeeds(DefProvider.Current.AllDefsListForReading<NeedDef>(),
+                limits);
+            if (addable.Count > 0)
+            {
+                var addRect = Layout.GetTopRowRect(needsRect, Labels.SectionHeaderHeight, out needsRect);
+                contentHeight += addRect.height;
+                Buttons.DoActionButton(addRect, Common.Resources.Strings.Actions.Add, () =>
+                {
+                    Find.WindowStack.Add(new FloatMenu([
+                        .. addable.Select(def => new FloatMenuOption(def.GetLabel(),
+                            () => { limits.Add(new NeedLimit(def)); })
+                        {
+                            tooltip = new TipSignal(def.description)
+                        })
+                    ]));
+                });
+            }
+        }
+        if (Event.current.type == EventType.Layout) _needsSectionContentHeight = contentHeight;
+        return y;
+    }
+
+    /// <summary>
     ///     Configures and renders the UI for dedicated worker settings within a specified rectangular area.
     /// </summary>
     /// <param name="rect">The rectangular area in which the dedicated worker settings UI will be rendered.</param>
@@ -396,6 +504,7 @@ public partial class Settings
         if (WorkManagerMod.Settings.UseDedicatedWorkers)
             y += DoRuleDedicatedWorkerSettings(remRect, defaultRule, out remRect);
         y += DoRuleAllowedWorkers(remRect, out remRect);
+        y += DoRuleNeeds(remRect, defaultRule, out remRect);
         return y;
     }
 

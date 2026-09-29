@@ -396,6 +396,29 @@ internal class WorkTypeAssignmentRule : DefCache<WorkTypeDef>, IExposable
                 $"{Strings.AllowedWorkersLabel}".Colorize(ColoredText.ColonistCountColor), 1);
             if (AllowedWorkers != null)
                 stringBuilder.AppendLine(AllowedWorkers.GetSummary(2));
+            stringBuilder.AppendLineIndented(
+                $"{Strings.NeedsLabel}".Colorize(ColoredText.ColonistCountColor), 1);
+            if (!FilterNeeds.HasValue)
+            {
+                stringBuilder.AppendLineIndented(Strings.WorkTypeRuleUndefinedSectionTooltip, 2);
+            }
+            else if (!FilterNeeds.Value)
+            {
+                stringBuilder.AppendLineIndented(Strings.WorkTypeRuleDisabledSettingTooltip, 2);
+            }
+            else if (NeedLimits == null || NeedLimits.Count == 0)
+            {
+                stringBuilder.AppendLineIndented(Strings.NeedsEmptyLabel, 2);
+            }
+            else
+            {
+                foreach (var limit in NeedLimits)
+                {
+                    stringBuilder.AppendLineIndented(
+                        $"{(limit.Def != null ? limit.Label : limit.DefName)}: {limit.Threshold.ToStringPercent()}",
+                        2);
+                }
+            }
             return stringBuilder.ToString();
         }
     }
