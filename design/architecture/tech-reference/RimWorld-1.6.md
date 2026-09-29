@@ -143,6 +143,14 @@ Mining context: `Filth_RubbleRock` Beauty −15 indoors / −4 outdoors; rough s
 - Work Tab, Priority Master, AutoPriorities, Better Pawn Control, Colony Manager: no known need-gated work types [unverified].
 - LordKuper.Common `PawnFilter` limits: stateless threshold/range checks on every update. No comparable filter uses hysteresis; the WorkManager needs filter is stateless too (ADR-0006).
 
+### UI — menus, tooltips, formatting (`Verse`)
+Verified 2026-09-29: member names present in the local 1.6 `Assembly-CSharp.dll`; signatures confirmed by the project compiling against it with 0 warnings.
+- `FloatMenu` (`Window`): `new FloatMenu(List<FloatMenuOption>)`, opened with `Find.WindowStack.Add(...)`. Used for the schedule / work-type pickers (`Settings_Schedules.cs`, `Settings_WorkTypes.cs`) and the Needs "Add" menu (ADR-0008).
+- `FloatMenuOption`: ctor `(string label, Action action)`; public field `TipSignal? tooltip` — set via object initializer `tooltip = new TipSignal(text)` to show a per-option hover tooltip (ADR-0008, AC-31). The field type is `TipSignal`, not `string`.
+- `TipSignal` (struct): tooltip payload; constructed from a `string`. `TooltipHandler.TipRegion(Rect, string)` remains the rect-based route used elsewhere (`Settings_Schedules.cs`).
+- `TexUI.DismissTex` (`static Texture2D`): stock "dismiss / remove" icon; passed to Common's `IconButton` for the Needs entry remove button (ADR-0008).
+- `GenText.ToStringPercent(this float)` (extension): formats `0..1` as a percentage string (e.g. `0.3f` → `"30%"`); used in the rule summary's Needs part (`WorkTypeAssignmentRule.cs`).
+
 ### Localization (`Verse`)
 - `string.Translate()` (extension): keyed-text lookup against `Languages/<locale>/Keyed/*.xml`. Parameterized form `"Key".Translate(arg0, …)` substitutes positional placeholders.
 - Keyed XML lives in `1.6/Languages/{English,Russian,ChineseSimplified}/Keyed/WorkManager_Keyed.xml` (English-only for legacy 1.1–1.5).
@@ -174,5 +182,5 @@ Mining context: `Filth_RubbleRock` Beauty −15 indoors / −4 outdoors; rough s
 
 ## Known issues and workarounds
 - `Current.Game` / `Find.*` are null outside an active game; always guard on game-less paths (the source already does for `ForceUpdate*`).
-- Testing any RimWorld-typed unit requires the `AppDomain.AssemblyResolve` handler registered in a global `[SetUpFixture]` resolving from `$(RimWorldManagedDir)` before the type loads (see ADR-0002 and `LordKuper.Common-1.6.md`); `*DefOf` caches are only populated after the game's def-load, so prefer pure-logic units that do not require populated defs.
+- Testing any RimWorld-typed unit needs `Assembly-CSharp` resolvable at both NUnit discovery and execution; the mechanism (build-time `CopyRimWorldTestDeps` + global `[SetUpFixture]` `AssemblyResolve` handler) is documented once in [NUnit-4.6.1 — Known issues](NUnit-4.6.1.md#known-issues-and-workarounds) (decision: ADR-0002 amendment 2026-09-29); `*DefOf` caches are only populated after the game's def-load, so prefer pure-logic units that do not require populated defs.
 - No primary API reference is fetchable; keep this doc grounded in decompiled `Assembly-CSharp` and observed usage, and re-verify *(unverified)* signatures against the install when touched.

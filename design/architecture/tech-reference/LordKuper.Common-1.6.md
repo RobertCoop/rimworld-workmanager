@@ -76,4 +76,4 @@ Grounded in actual `using`/usages across `Source/WorkManager/`. Namespaces consu
 ## Known issues and workarounds
 - No compile-time guard against deploying a different 1.6 DLL than the one referenced. Workaround: pin `$(LordKuperCommonAssembliesDir)` to the same 1.6 assemblies tree the game loads, and validate at game start (the mod logs its version on init).
 - `DefCache<T>` latch: see `LordKuper.Common.Cache` above — never read `.Def` / `.Label` on a settings load path.
-- Test code that exercises types touching `LordKuper.Common` indirectly pulls in RimWorld types — those require the RimWorld `AppDomain.AssemblyResolve` handler registered in a global `[SetUpFixture]` before load (see test conventions).
+- Test code that exercises types touching `LordKuper.Common` indirectly pulls in RimWorld types; how the test project makes those loadable at discovery and execution is documented in [NUnit-4.6.1 — Known issues](NUnit-4.6.1.md#known-issues-and-workarounds).
