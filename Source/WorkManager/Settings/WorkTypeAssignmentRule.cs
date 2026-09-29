@@ -573,7 +573,44 @@ internal class WorkTypeAssignmentRule : DefCache<WorkTypeDef>, IExposable
     public bool IsAllowedWorker(Pawn pawn)
     {
         if (pawn == null) throw new ArgumentNullException(nameof(pawn));
-        return AllowedWorkers!.SatisfiesFilter(pawn, Def);
+        return AllowedWorkers!.SatisfiesFilter(pawn, Def) && !IsNeedBlocked(pawn);
+    }
+
+    /// <summary>
+    ///     Determines whether the needs filter blocks this work type for the specified pawn.
+    /// </summary>
+    /// <param name="pawn">The pawn to evaluate.</param>
+    /// <returns>
+    ///     <see langword="true" /> if the filter is on and the pawn's level for any listed need is below its threshold.
+    /// </returns>
+    internal bool IsNeedBlocked(Pawn pawn)
+    {
+        return IsNeedBlocked(FilterNeeds, NeedLimits,
+            def => pawn.needs?.TryGetNeed(def)?.CurLevelPercentage);
+    }
+
+    /// <summary>
+    ///     Determines whether any need in <paramref name="limits" /> is strictly below its threshold. Entries whose def is
+    ///     unresolved and needs the pawn does not have are ignored.
+    /// </summary>
+    /// <param name="filterNeeds">The filter state; only <c>true</c> can block.</param>
+    /// <param name="limits">The need thresholds.</param>
+    /// <param name="getLevelPercentage">
+    ///     Returns the pawn's level for a need as a fraction of its maximum, or <c>null</c> when the pawn lacks the need.
+    /// </param>
+    /// <returns><see langword="true" /> if the work type is blocked.</returns>
+    internal static bool IsNeedBlocked(bool? filterNeeds, IReadOnlyList<NeedLimit>? limits,
+        Func<NeedDef, float?> getLevelPercentage)
+    {
+        if (filterNeeds != true || limits == null || limits.Count == 0) return false;
+        foreach (var limit in limits)
+        {
+            var def = limit.Def;
+            if (def == null) continue;
+            var level = getLevelPercentage(def);
+            if (level.HasValue && level.Value < limit.Threshold) return true;
+        }
+        return false;
     }
 
     /// <summary>
