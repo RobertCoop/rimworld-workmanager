@@ -565,6 +565,52 @@ public class NeedsFilterTests : StateIsolationTestBase
         secondVerdict.Should().BeFalse();
     }
 
+    // ==================== HasAddableNeeds ====================
+
+    [Test]
+    public void HasAddableNeeds_EligibleNeedMissing_True()
+    {
+        var hunger = new NeedDef { defName = "Hunger", label = "hunger" };
+        var beauty = new NeedDef { defName = "Beauty", label = "beauty" };
+
+        Settings.HasAddableNeeds([hunger, beauty], [new NeedLimit("Hunger")]).Should().BeTrue();
+    }
+
+    [Test]
+    public void HasAddableNeeds_AllEligibleAdded_False()
+    {
+        var hunger = new NeedDef { defName = "Hunger", label = "hunger" };
+        var beauty = new NeedDef { defName = "Beauty", label = "beauty" };
+
+        Settings.HasAddableNeeds([hunger, beauty], [new NeedLimit("Hunger"), new NeedLimit("Beauty")])
+            .Should().BeFalse();
+    }
+
+    [Test]
+    public void HasAddableNeeds_OnlyExcludedRemain_False()
+    {
+        var hunger = new NeedDef { defName = "Hunger", label = "hunger" };
+        var mechEnergy = new NeedDef { defName = "MechEnergy", label = "energy", playerMechsOnly = true };
+        var authority = new NeedDef { defName = "Authority", label = "authority" };
+
+        Settings.HasAddableNeeds([hunger, mechEnergy, authority], [new NeedLimit("Hunger")])
+            .Should().BeFalse();
+    }
+
+    [Test]
+    public void HasAddableNeeds_CaseInsensitive()
+    {
+        var hunger = new NeedDef { defName = "Hunger", label = "hunger" };
+
+        Settings.HasAddableNeeds([hunger], [new NeedLimit("HUNGER")]).Should().BeFalse();
+    }
+
+    [Test]
+    public void HasAddableNeeds_NoNeeds_False()
+    {
+        Settings.HasAddableNeeds([], []).Should().BeFalse();
+    }
+
     // ==================== GetAddableNeeds ====================
 
     [Test]

@@ -284,20 +284,41 @@ public partial class Settings
     ///     list priority (descending) and then by label.
     /// </returns>
     internal static List<NeedDef> GetAddableNeeds(IEnumerable<NeedDef> all,
-        IReadOnlyCollection<NeedLimit> existing)
+        IReadOnlyList<NeedLimit> existing)
     {
-        var present = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var limit in existing)
-        {
-            if (limit.DefName != null) present.Add(limit.DefName);
-        }
         return all
-            .Where(def => !def.playerMechsOnly &&
-                          !string.Equals(def.defName, "Authority", StringComparison.Ordinal) &&
-                          !present.Contains(def.defName))
+            .Where(def => IsAddableNeed(def, existing))
             .OrderByDescending(def => def.listPriority)
             .ThenBy(def => def.GetLabel(), StringComparer.CurrentCulture)
             .ToList();
+    }
+
+    /// <summary>
+    ///     Determines whether at least one need can still be added to a needs filter. Allocation-free, safe to call
+    ///     every frame.
+    /// </summary>
+    /// <param name="all">All known need definitions.</param>
+    /// <param name="existing">The need limits already present; their def names are excluded.</param>
+    /// <returns><see langword="true" /> if <see cref="GetAddableNeeds" /> would return a non-empty list.</returns>
+    internal static bool HasAddableNeeds(IReadOnlyList<NeedDef> all, IReadOnlyList<NeedLimit> existing)
+    {
+        for (var i = 0; i < all.Count; i++)
+        {
+            if (IsAddableNeed(all[i], existing)) return true;
+        }
+        return false;
+    }
+
+    private static bool IsAddableNeed(NeedDef def, IReadOnlyList<NeedLimit> existing)
+    {
+        if (def.playerMechsOnly || string.Equals(def.defName, "Authority", StringComparison.Ordinal))
+            return false;
+        for (var i = 0; i < existing.Count; i++)
+        {
+            if (string.Equals(existing[i].DefName, def.defName, StringComparison.OrdinalIgnoreCase))
+                return false;
+        }
+        return true;
     }
 
     /// <summary>
@@ -353,21 +374,24 @@ public partial class Settings
                     ], label, tooltip, ref limit.Threshold, 0f, 1f, 0.01f, null, out needsRect);
             }
             if (removeIndex >= 0) limits.RemoveAt(removeIndex);
-            var addRect = Layout.GetTopRowRect(needsRect, Buttons.ActionButtonHeight, out needsRect);
-            contentHeight += addRect.height;
-            Buttons.DoActionButton(addRect, Common.Resources.Strings.Actions.Add, () =>
+            if (HasAddableNeeds(DefProvider.Current.AllDefsListForReading<NeedDef>(), limits))
             {
-                var addable = GetAddableNeeds(DefProvider.Current.AllDefsListForReading<NeedDef>(),
-                    limits);
-                if (addable.Count == 0) return;
-                Find.WindowStack.Add(new FloatMenu([
-                    .. addable.Select(def => new FloatMenuOption(def.GetLabel(),
-                        () => { limits.Add(new NeedLimit(def)); })
-                    {
-                        tooltip = new TipSignal(def.description)
-                    })
-                ]));
-            });
+                var addRect = Layout.GetTopRowRect(needsRect, Buttons.ActionButtonHeight, out needsRect);
+                contentHeight += addRect.height;
+                Buttons.DoActionButton(addRect, Common.Resources.Strings.Actions.Add, () =>
+                {
+                    var addable = GetAddableNeeds(DefProvider.Current.AllDefsListForReading<NeedDef>(),
+                        limits);
+                    if (addable.Count == 0) return;
+                    Find.WindowStack.Add(new FloatMenu([
+                        .. addable.Select(def => new FloatMenuOption(def.GetLabel(),
+                            () => { limits.Add(new NeedLimit(def)); })
+                        {
+                            tooltip = new TipSignal(def.description)
+                        })
+                    ]));
+                });
+            }
         }
         if (Event.current.type == EventType.Layout) _needsSectionContentHeight = contentHeight;
         return y;
