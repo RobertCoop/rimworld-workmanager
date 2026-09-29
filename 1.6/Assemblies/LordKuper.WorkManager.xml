@@ -1556,7 +1556,7 @@
             <param name="remRect">When this method returns, contains the remaining rectangle after rendering the section.</param>
             <returns>The vertical offset after rendering the section, which can be used to position subsequent UI elements.</returns>
         </member>
-        <member name="M:LordKuper.WorkManager.Settings.GetAddableNeeds(System.Collections.Generic.IEnumerable{RimWorld.NeedDef},System.Collections.Generic.IReadOnlyCollection{LordKuper.WorkManager.NeedLimit})">
+        <member name="M:LordKuper.WorkManager.Settings.GetAddableNeeds(System.Collections.Generic.IEnumerable{RimWorld.NeedDef},System.Collections.Generic.IReadOnlyList{LordKuper.WorkManager.NeedLimit})">
             <summary>
                 Gets the needs that can still be added to a needs filter, in menu order.
             </summary>
@@ -1566,6 +1566,15 @@
                 The addable needs, excluding mechanoid-only needs, the Authority need and already listed needs, sorted by
                 list priority (descending) and then by label.
             </returns>
+        </member>
+        <member name="M:LordKuper.WorkManager.Settings.HasAddableNeeds(System.Collections.Generic.IReadOnlyList{RimWorld.NeedDef},System.Collections.Generic.IReadOnlyList{LordKuper.WorkManager.NeedLimit})">
+            <summary>
+                Determines whether at least one need can still be added to a needs filter. Allocation-free, safe to call
+                every frame.
+            </summary>
+            <param name="all">All known need definitions.</param>
+            <param name="existing">The need limits already present; their def names are excluded.</param>
+            <returns><see langword="true" /> if <see cref="M:LordKuper.WorkManager.Settings.GetAddableNeeds(System.Collections.Generic.IEnumerable{RimWorld.NeedDef},System.Collections.Generic.IReadOnlyList{LordKuper.WorkManager.NeedLimit})" /> would return a non-empty list.</returns>
         </member>
         <member name="M:LordKuper.WorkManager.Settings.DoRuleNeeds(UnityEngine.Rect,System.Boolean,UnityEngine.Rect@)">
             <summary>
