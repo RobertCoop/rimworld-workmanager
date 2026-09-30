@@ -1,7 +1,7 @@
 {
   "sprint_id": "002-work-type-needs-filters",
   "branch": "sprint/002-work-type-needs-filters",
-  "phase": "pr",
+  "phase": "done",
   "reviews": {
     "design": {
       "iteration": 2,
@@ -67,7 +67,7 @@
     }
   },
   "created_at": "2026-09-29T00:00:00Z",
-  "updated_at": "2026-09-29T21:56:05Z",
+  "updated_at": "2026-09-30T00:31:54Z",
   "review_fixes_pending": null,
   "subsystems_touched": [],
   "new_subsystems": [],
@@ -88,5 +88,13 @@
       "resolved": "2026-09-29",
       "resolution": "User ran MS-1..MS-5 in RimWorld 1.6: all passed (\"Everything passed as expected.\"). Impl assessment approved; advanced to impl-review."
     }
-  ]
+  ],
+  "archived_at": "2026-09-30T00:31:54Z",
+  "pr": {
+    "target": "upstream",
+    "repo": "LordKuper/rimworld-workmanager",
+    "base": "master",
+    "head": "RobertCoop:sprint/002-work-type-needs-filters",
+    "url": "https://github.com/LordKuper/rimworld-workmanager/pull/22"
+  }
 }

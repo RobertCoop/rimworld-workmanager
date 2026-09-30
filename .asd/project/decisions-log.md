@@ -275,3 +275,10 @@ Append-only. Never edited or removed. New entries appended below.
 
 - **Rationale**: The ui reviewer returned CONCERNS with a single `medium` finding. That is below the iter-04 `high` severity floor (`review-policy.md`), so it does not count toward the gate. It is also a false positive: Common's `DefCache.Label` returns the defName when the def is unresolved, so the rule summary already shows the defName (AC-39). The orchestrator checked this in the Common source and the workshop DLL. All other reviewers returned APPROVE. Advancing from impl-review to pr moves forward, so no review counter is reset.
 - **Affected docs**: .asd/sprints/002-work-type-needs-filters/reviews/impl/iter-04/, .asd/sprints/002-work-type-needs-filters/state.json
+
+## 2026-09-29 — Sprint 002-work-type-needs-filters completed, archived, PR #22
+
+- **Decision**: Sprint closed. User confirmed the PR gate via AskUserQuestion ("Open PR") and target ("It goes upstream"). Sprint folder archived to `.asd/sprints/archived/002-work-type-needs-filters/` (524e5ee); branch pushed to the RobertCoop fork; PR opened against upstream: https://github.com/LordKuper/rimworld-workmanager/pull/22 (base `master`, head `RobertCoop:sprint/002-work-type-needs-filters`). The auto-mode classifier initially blocked the archive/push/PR steps; the user then explicitly authorized them in chat and they were run by the orchestrator.
+- **Rationale**: DoD met — all 49 ACs covered, impl-review iter 04 APPROVE (all 8 lenses at the high floor), 124/124 tests, build 0 warnings, format clean, MS-1..MS-5 passed in-game.
+- **Follow-ups**: per-frame rule `Description` rebuild (pre-existing); G-3 option (b) — restrict the day-level fail-safe to allowed workers; concept.html "Guaranteed coverage" pillar wording vs the opt-in needs filter; concept.html `delegates_to` path cosmetic.
+- **Affected docs**: .asd/sprints/archived/002-work-type-needs-filters/state.json, .asd/project/decisions-log.md
