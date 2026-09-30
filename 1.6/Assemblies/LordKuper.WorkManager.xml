@@ -1658,8 +1658,9 @@
             </summary>
             <remarks>
                 This method clears the existing list of allowed workers and repopulates it by applying  the
-                filtering logic defined in the selected work type rule. If no rule is selected or  the rule does not specify
-                allowed workers, the list remains empty.
+                filtering logic defined in the selected work type rule, then removes pawns that the rule's effective needs
+                filter currently blocks. If no rule is selected or  the rule does not specify allowed workers, the list
+                remains empty.
             </remarks>
         </member>
         <member name="M:LordKuper.WorkManager.Settings.ValidateWorkTypes">
