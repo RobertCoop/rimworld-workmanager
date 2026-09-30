@@ -282,3 +282,10 @@ Append-only. Never edited or removed. New entries appended below.
 - **Rationale**: DoD met — all 49 ACs covered, impl-review iter 04 APPROVE (all 8 lenses at the high floor), 124/124 tests, build 0 warnings, format clean, MS-1..MS-5 passed in-game.
 - **Follow-ups**: per-frame rule `Description` rebuild (pre-existing); G-3 option (b) — restrict the day-level fail-safe to allowed workers; concept.html "Guaranteed coverage" pillar wording vs the opt-in needs filter; concept.html `delegates_to` path cosmetic.
 - **Affected docs**: .asd/sprints/archived/002-work-type-needs-filters/state.json, .asd/project/decisions-log.md
+
+## 2026-09-30 — Sprint 002 follow-up: Available pawns preview applies the needs filter
+
+- **Decision**: After in-game testing the user reported the preview did not reflect the needs filter (by design per PRD D2 / AC-40) and asked for it to hide need-blocked pawns, delivered on the sprint 002 branch / PR #22. The user explicitly asked for this as a minor update "with less process", so it was done without a new ASD sprint. `UpdateAllowedWorkers` now drops pawns blocked by the rule's effective needs filter (own, or the default rule's when inheriting) via `IsNeedBlocked(Pawn)`; `DoRuleNeeds` refreshes the preview on state/threshold/add/remove changes. `AvailablePawnsTooltip` reworded in en/ru/zh.
+- **Rationale**: Preview should match actual assignment; the user found the mismatch confusing in play.
+- **Verification**: build 0/0, format clean, 124/124 tests (preview needs a live map; in-game check by the user).
+- **Affected docs**: design/architecture/adr/adr-0008-needs-ui-summary-and-strings.html, adr-0006 (Negative consequences), design/product/requirements.html (NF-AC-40). Archived sprint 002 PRD left unchanged (immutable).

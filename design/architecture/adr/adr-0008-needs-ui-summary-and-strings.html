@@ -201,12 +201,12 @@ source: ""
         <li>3 reworded values, in all three locales:
           <ul>
             <li><code>EnsureWorkerAssignedOnTooltip</code> and <code>MinWorkerNumberTooltip</code> gain "pawns blocked by the needs filter are never assigned" (AC-41).</li>
-            <li><code>AvailablePawnsTooltip</code> gains "the needs filter is not applied to this preview" (AC-40, PRD D2).</li>
+            <li><code>AvailablePawnsTooltip</code> says the list shows pawns that pass the allowed-workers filter and are not currently need-blocked, and that Refresh picks up changed need levels (AC-40; amended 2026-09-30).</li>
           </ul></li>
         <li>Reused unchanged: <code>WorkTypeRuleUndefinedSettingTooltip</code>, <code>WorkTypeRuleUndefinedSectionTooltip</code>, <code>WorkTypeRuleDisabledSettingTooltip</code>, and Common's <code>Actions.Add</code> / <code>Actions.Delete</code>.</li>
         <li>Each locale ends with the same 55 <code>Settings.WorkTypes.*</code> keys.</li>
       </ul></li>
-    <li><strong>Available pawns preview:</strong> the list is unchanged (PRD D2). Only its tooltip is reworded.</li>
+    <li><strong>Available pawns preview</strong> (amended 2026-09-30, reversing PRD D2 after in-game testing): <code>UpdateAllowedWorkers</code> also removes pawns that the rule's effective needs filter blocks — the rule's own <code>FilterNeeds</code>/<code>NeedLimits</code>, or the default rule's when the rule inherits — via the same <code>IsNeedBlocked(Pawn)</code> used for assignment. <code>DoRuleNeeds</code> refreshes the preview when the state, a threshold, or the entry list changes. Need levels are read when the list is rebuilt, so live level changes appear on the next edit or Refresh.</li>
   </ol>
 
   <h2 id="consequences">Consequences</h2>

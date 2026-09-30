@@ -213,7 +213,7 @@ source: ""
     <div class="cons">
       <h3>Negative</h3>
       <ul>
-        <li>There are now two eligibility mechanisms, which is a documented exception to a project convention. The "Available pawns" preview and <code>DedicatedWorkerMode.PawnCount</code> target counting do not see the needs filter.</li>
+        <li>There are now two eligibility mechanisms, which is a documented exception to a project convention. <code>DedicatedWorkerMode.PawnCount</code> target counting does not see the needs filter. (The "Available pawns" preview does since 2026-09-30; see ADR-0008.)</li>
         <li>Combined rules share <code>NeedLimit</code> instances with the source rule (shallow copy, as in Common). Edits in the settings window reach the combined rule before <code>WriteSettings</code> rebuilds it.</li>
         <li>Unresolved entries are silently inert during evaluation. The only signal is the marker in the UI (ADR-0008).</li>
         <li>The <code>pawn.needs?.TryGetNeed</code> adapter line and the Scribe round trip are not unit-tested; they are covered by manual checks.</li>

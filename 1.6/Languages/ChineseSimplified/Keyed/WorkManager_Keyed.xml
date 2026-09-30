@@ -180,8 +180,8 @@
     <LordKuper.WorkManager.Settings.WorkTypes.PawnCountFactorTooltip>专职工人的目标数量将通过将符合指定筛选条件的角色数量乘以此因子并四舍五入到最接近的整数来计算。</LordKuper.WorkManager.Settings.WorkTypes.PawnCountFactorTooltip>
     <!-- EN: Available pawns -->
     <LordKuper.WorkManager.Settings.WorkTypes.AvailablePawnsLabel>可用角色</LordKuper.WorkManager.Settings.WorkTypes.AvailablePawnsLabel>
-    <!-- EN: List of pawns that satisfy the allowed workers filter. The needs filter is not applied to this preview. -->
-    <LordKuper.WorkManager.Settings.WorkTypes.AvailablePawnsTooltip>符合允许工人筛选条件的角色列表。此预览不应用需求筛选。</LordKuper.WorkManager.Settings.WorkTypes.AvailablePawnsTooltip>
+    <!-- EN: List of pawns that satisfy the allowed workers filter and are not currently blocked by the needs filter. Need levels change over time; press Refresh to update. -->
+    <LordKuper.WorkManager.Settings.WorkTypes.AvailablePawnsTooltip>符合允许工人筛选条件且当前未被需求筛选阻止的角色列表。需求水平会随时间变化；点击刷新按钮以更新。</LordKuper.WorkManager.Settings.WorkTypes.AvailablePawnsTooltip>
     <!-- EN: Needs -->
     <LordKuper.WorkManager.Settings.WorkTypes.NeedsLabel>需求</LordKuper.WorkManager.Settings.WorkTypes.NeedsLabel>
     <!-- EN: The work type is disabled for a pawn while any need listed here is below its threshold. This overrides "ensure worker assigned" and "minimum workers". Pawns that do not have a listed need are not affected. Fast-changing needs (Beauty, Comfort, Food, Rest, Mood) may switch the work type on and off between updates. -->

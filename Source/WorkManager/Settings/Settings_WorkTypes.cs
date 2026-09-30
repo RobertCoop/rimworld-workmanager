@@ -334,6 +334,7 @@ public partial class Settings
         var y = Sections.DoLabeledSectionBox(rect, _needsSectionContentHeight, Strings.NeedsLabel,
             Strings.NeedsTooltip, out var needsRect, out remRect);
         var contentHeight = 0f;
+        var oldFilterNeeds = rule.FilterNeeds;
         if (defaultRule)
         {
             var value = rule.FilterNeeds == true;
@@ -348,6 +349,7 @@ public partial class Settings
                 Strings.FilterNeedsLabel, Strings.GetFilterNeedsTooltip(true), null,
                 out needsRect);
         }
+        var needsChanged = rule.FilterNeeds != oldFilterNeeds;
         if (rule.FilterNeeds == true)
         {
             var limits = rule.NeedLimits ??= [];
@@ -367,13 +369,19 @@ public partial class Settings
                     ? limit.Label ?? limit.DefName!
                     : string.Format(Strings.NeedUnavailableLabel, limit.DefName);
                 var tooltip = resolved ? limit.Def!.description : Strings.NeedUnavailableTooltip;
+                var oldThreshold = limit.Threshold;
                 contentHeight += Fields.DoLabeledPercentSlider(needsRect, 1,
                     [
                         new IconButton(TexUI.DismissTex, () => { removeIndex = index; },
                             Common.Resources.Strings.Actions.Delete)
                     ], label, tooltip, ref limit.Threshold, 0f, 1f, 0.01f, null, out needsRect);
+                if (!Mathf.Approximately(limit.Threshold, oldThreshold)) needsChanged = true;
             }
-            if (removeIndex >= 0) limits.RemoveAt(removeIndex);
+            if (removeIndex >= 0)
+            {
+                limits.RemoveAt(removeIndex);
+                needsChanged = true;
+            }
             if (HasAddableNeeds(DefProvider.Current.AllDefsListForReading<NeedDef>(), limits))
             {
                 var addRect = Layout.GetTopRowRect(needsRect, Buttons.ActionButtonHeight, out needsRect);
@@ -384,7 +392,11 @@ public partial class Settings
                         limits);
                     Find.WindowStack.Add(new FloatMenu([
                         .. addable.Select(def => new FloatMenuOption(def.GetLabel(),
-                            () => { limits.Add(new NeedLimit(def)); })
+                            () =>
+                            {
+                                limits.Add(new NeedLimit(def));
+                                UpdateAllowedWorkers();
+                            })
                         {
                             tooltip = new TipSignal(def.description)
                         })
@@ -392,6 +404,7 @@ public partial class Settings
                 });
             }
         }
+        if (needsChanged) UpdateAllowedWorkers();
         if (Event.current.type == EventType.Layout) _needsSectionContentHeight = contentHeight;
         return y;
     }
@@ -698,8 +711,9 @@ public partial class Settings
     /// </summary>
     /// <remarks>
     ///     This method clears the existing list of allowed workers and repopulates it by applying  the
-    ///     filtering logic defined in the selected work type rule. If no rule is selected or  the rule does not specify
-    ///     allowed workers, the list remains empty.
+    ///     filtering logic defined in the selected work type rule, then removes pawns that the rule's effective needs
+    ///     filter currently blocks. If no rule is selected or  the rule does not specify allowed workers, the list
+    ///     remains empty.
     /// </remarks>
     private void UpdateAllowedWorkers()
     {
@@ -707,7 +721,14 @@ public partial class Settings
         var rule = SelectedWorkTypeRule;
         if (rule?.AllowedWorkers == null) return;
         if (Find.CurrentMap == null || Find.Maps == null || !Find.Maps.Any()) return;
-        _allowedWorkers.AddRange(rule.AllowedWorkers.GetFilteredPawns(Find.Maps, rule.Def));
+        // Mirror assignment: a rule that inherits its needs filter uses the default rule's.
+        var needsRule = rule.FilterNeeds.HasValue
+            ? rule
+            : WorkTypeRules.FirstOrDefault(r => r.DefName == null) ?? rule;
+        foreach (var pawn in rule.AllowedWorkers.GetFilteredPawns(Find.Maps, rule.Def))
+        {
+            if (!needsRule.IsNeedBlocked(pawn)) _allowedWorkers.Add(pawn);
+        }
     }
 
     /// <summary>
