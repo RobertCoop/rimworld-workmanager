@@ -1071,18 +1071,29 @@
         </member>
         <member name="T:LordKuper.WorkManager.NeedLimit">
             <summary>
-                A threshold for a single <see cref="T:RimWorld.NeedDef" />: a pawn whose level for the need is strictly below
-                <see cref="F:LordKuper.WorkManager.NeedLimit.Threshold" /> is not assigned the work type. Only the def name and the threshold are persisted.
+                A level range for a single <see cref="T:RimWorld.NeedDef" />: a pawn is allowed the work type only while its level for the
+                need (<c>CurLevelPercentage</c>, 0..1) is inside the inclusive range <see cref="F:LordKuper.WorkManager.NeedLimit.Limit" />; outside it the work
+                type is blocked. Only the def name and the range are persisted.
             </summary>
         </member>
-        <member name="F:LordKuper.WorkManager.NeedLimit.DefaultThreshold">
+        <member name="F:LordKuper.WorkManager.NeedLimit.DefaultMin">
             <summary>
-                The threshold given to a newly added need limit (50%).
+                The lower bound given to a newly added need limit (50%).
             </summary>
         </member>
-        <member name="F:LordKuper.WorkManager.NeedLimit.Threshold">
+        <member name="F:LordKuper.WorkManager.NeedLimit.DefaultMax">
             <summary>
-                The minimum need level, as a fraction in [0, 1] of the need's maximum, below which the work type is blocked.
+                The upper bound given to a newly added need limit (100%).
+            </summary>
+        </member>
+        <member name="F:LordKuper.WorkManager.NeedLimit.LegacyThresholdNodeName">
+            <summary>
+                The settings node name used by earlier builds for the single threshold.
+            </summary>
+        </member>
+        <member name="F:LordKuper.WorkManager.NeedLimit.Limit">
+            <summary>
+                The allowed need level range, as fractions in [0, 1] of the need's maximum, inclusive at both ends.
             </summary>
         </member>
         <member name="M:LordKuper.WorkManager.NeedLimit.#ctor">
@@ -1104,7 +1115,8 @@
         </member>
         <member name="M:LordKuper.WorkManager.NeedLimit.ExposeData">
             <summary>
-                Serializes the def name and the threshold.
+                Serializes the def name and the range. Settings saved before the range existed hold a single legacy
+                <c>Threshold</c>; it is migrated to the range [threshold, 1]. Touches only values, never <c>Def</c>.
             </summary>
         </member>
         <member name="T:LordKuper.WorkManager.Settings">
@@ -1413,6 +1425,11 @@
         <member name="F:LordKuper.WorkManager.Settings.AllowedWorkersPawnStatInputLocalId">
             <summary>
                 Local input ID for allowed workers pawn stat.
+            </summary>
+        </member>
+        <member name="F:LordKuper.WorkManager.Settings.NeedLimitsInputLocalId">
+            <summary>
+                Local input ID for the need limit range sliders; clear of the worker filter ranges above.
             </summary>
         </member>
         <member name="F:LordKuper.WorkManager.Settings.DedicatedWorkersPawnCapacityInputLocalId">
@@ -1862,16 +1879,16 @@
             </summary>
             <param name="pawn">The pawn to evaluate.</param>
             <returns>
-                <see langword="true" /> if the filter is on and the pawn's level for any listed need is below its threshold.
+                <see langword="true" /> if the filter is on and the pawn's level for any listed need is outside its range.
             </returns>
         </member>
         <member name="M:LordKuper.WorkManager.WorkTypeAssignmentRule.IsNeedBlocked(System.Nullable{System.Boolean},System.Collections.Generic.IReadOnlyList{LordKuper.WorkManager.NeedLimit},System.Func{RimWorld.NeedDef,System.Nullable{System.Single}})">
             <summary>
-                Determines whether any need in <paramref name="limits" /> is strictly below its threshold. Entries whose def is
+                Determines whether any need in <paramref name="limits" /> is outside its inclusive range. Entries whose def is
                 unresolved and needs the pawn does not have are ignored.
             </summary>
             <param name="filterNeeds">The filter state; only <c>true</c> can block.</param>
-            <param name="limits">The need thresholds.</param>
+            <param name="limits">The need ranges.</param>
             <param name="getLevelPercentage">
                 Returns the pawn's level for a need as a fraction of its maximum, or <c>null</c> when the pawn lacks the need.
             </param>
@@ -1879,8 +1896,8 @@
         </member>
         <member name="M:LordKuper.WorkManager.WorkTypeAssignmentRule.ValidateNeedsFilter">
             <summary>
-                Normalizes the needs filter: creates the list, drops empty and duplicate entries, clamps thresholds and sets the
-                default rule's state. Reads only def names and thresholds, so it is safe before defs are loaded.
+                Normalizes the needs filter: creates the list, drops empty and duplicate entries, normalizes ranges (NaN reset, clamp, swap) and sets the
+                default rule's state. Reads only def names and ranges, so it is safe before defs are loaded.
             </summary>
         </member>
         <member name="M:LordKuper.WorkManager.WorkTypeAssignmentRule.Validate">
