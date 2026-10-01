@@ -289,3 +289,10 @@ Append-only. Never edited or removed. New entries appended below.
 - **Rationale**: Preview should match actual assignment; the user found the mismatch confusing in play.
 - **Verification**: build 0/0, format clean, 124/124 tests (preview needs a live map; in-game check by the user).
 - **Affected docs**: design/architecture/adr/adr-0008-needs-ui-summary-and-strings.html, adr-0006 (Negative consequences), design/product/requirements.html (NF-AC-40). Archived sprint 002 PRD left unchanged (immutable).
+
+## 2026-10-01 — Sprint 002 follow-up: needs filter threshold becomes a two-sided range
+
+- **Decision**: At user request ("needs selector is a two-sided threshold slider similar to the skill level selector"), delivered on the sprint 002 branch / PR #22 as a direct update with light process (no new sprint, no review phases). `NeedLimit.Threshold` is replaced by an inclusive `FloatRange Limit` (default 50%-100%, equivalent to the old 50% threshold). A pawn is blocked when a resolved entry's level is `< min` or `> max`; a [0,1] range never blocks. Validation resets NaN bounds, clamps to [0,1] and swaps min > max. The UI uses Common's `Fields.DoLabeledPercentRangeSlider`; the summary shows `label [min..max]`; tooltips (en/ru/zh) say "outside its allowed range". Legacy settings with a `Threshold` and no `Limit` migrate to `[threshold, 1]` on load, touching values only (never `.Def`).
+- **Rationale**: Players want to block on too-high as well as too-low levels and to set arbitrary intervals; the capacity-limit range slider already exists in Common.
+- **Verification**: build 0 warnings, format clean, unit tests pass (see commit).
+- **Affected docs**: design/architecture/adr/adr-0006-needs-filter-model-and-evaluation.html, adr-0008-needs-ui-summary-and-strings.html, design/product/requirements.html (NF-G1, NF-AC-1/2/9/12-15/23/32/33/37/39). ADR-0006's rejected "FloatRange per need" alternative is superseded. Archived sprint 002 docs left unchanged (immutable).

@@ -16,7 +16,7 @@ source: ""
   <meta name="subsystem" content="N/A">
   <meta name="sprint-id" content="002-work-type-needs-filters">
   <meta name="status" content="accepted">
-  <meta name="updated" content="2026-09-29">
+  <meta name="updated" content="2026-10-01">
   <meta name="responsibility" content="owns: needs filter data model, persistence and evaluation on WorkTypeAssignmentRule; excludes: requirements, ux, code">
   <meta name="provenance" content="original">
   <meta name="source" content="">
@@ -128,7 +128,7 @@ source: ""
         <div class="stats">
           <span class="chip">accepted</span>
           <span class="chip">subsystem N/A</span>
-          <span class="chip">updated 2026-09-29</span>
+          <span class="chip">updated 2026-10-01</span>
         </div>
       </header>
       <main>
@@ -142,7 +142,8 @@ source: ""
 
   <h2 id="context">Context</h2>
   <ul>
-    <li>Scope decisions (decisions-log 2026-09-29): a per-work-type needs filter that is WorkManager-local, because LordKuper.Common is an upstream contract and cannot be edited from this repo. It blocks strictly below a threshold, supports any need, ships no defaults, and the block is absolute. There is no hysteresis: the check is stateless and runs on every update.</li>
+    <li><strong>Amended 2026-10-01: threshold → two-sided range at user request.</strong> The single lower threshold became an inclusive range <code>[min, max]</code> (<code>FloatRange Limit</code>, default 50%–100%, equivalent to the old 50% threshold), so the player can block a pawn whose need is too low or too high. The model, evaluation, validation and legacy migration below describe the amended behavior; the earlier "strictly below a threshold" wording is superseded.</li>
+    <li>Scope decisions (decisions-log 2026-09-29): a per-work-type needs filter that is WorkManager-local, because LordKuper.Common is an upstream contract and cannot be edited from this repo. It blocks a need level outside a per-need range, supports any need, ships no defaults, and the block is absolute. There is no hysteresis: the check is stateless and runs on every update.</li>
     <li>The existing rule model is <code>WorkTypeAssignmentRule : DefCache&lt;WorkTypeDef&gt;, IExposable</code>. Nullable fields mean "undefined, inherit from the default rule". <code>Combine(main, fallback)</code> takes the value from <code>main</code> when it has one. <code>Validate()</code> runs only when saving. Settings load in the <code>WorkManagerMod</code> constructor, before defs are loaded.</li>
     <li>Common precedent: <code>PawnCapacityLimit : DefCache&lt;PawnCapacityDef&gt;, IExposable</code> together with <code>PawnFilter.FilterPawnCapacities</code> (<code>bool?</code>) and <code>PawnCapacityLimits</code> (list). <code>CombinePawnCapacities</code> takes the source whose flag has a value and makes a shallow copy of its list. <code>SatisfiesFilter</code> skips entries whose def is unresolved and keeps no state.</li>
     <li><code>DefCache&lt;T&gt;</code> resolves lazily through <code>DefProvider.Current.GetNamedSilentFail&lt;T&gt;</code>. It latches on the first <code>.Def</code> / <code>.Label</code> read, so reading either before defs load caches <code>null</code> until restart.</li>
@@ -157,17 +158,17 @@ source: ""
   <ol>
     <li><strong>Entry type.</strong> New <code>internal sealed class NeedLimit : DefCache&lt;NeedDef&gt;, IExposable</code> in <code>Source/WorkManager/Settings/NeedLimit.cs</code>.
       <ul>
-        <li>Field: <code>public float Threshold = DefaultThreshold;</code> with <code>internal const float DefaultThreshold = 0.5f</code> (AC-32). It is stored as a fraction in [0, 1], the same scale as <code>Need.CurLevelPercentage</code>, and shown as 0–100%.</li>
+        <li>Field: <code>public FloatRange Limit = new(DefaultMin, DefaultMax);</code> with <code>internal const float DefaultMin = 0.5f</code> and <code>DefaultMax = 1f</code> (AC-32). It is stored as fractions in [0, 1], the same scale as <code>Need.CurLevelPercentage</code>, and shown as 0–100%. The range is inclusive at both ends.</li>
         <li>Constructors: <code>NeedLimit()</code> for Scribe, <code>NeedLimit(string defName)</code> and <code>NeedLimit(NeedDef def)</code>.</li>
-        <li><code>public new void ExposeData() { base.ExposeData(); Scribe_Values.Look(ref Threshold, nameof(Threshold), DefaultThreshold); }</code>. Only the defName and threshold are persisted, never <code>Scribe_Defs</code> / <code>LookMode.Def</code> (AC-11). Unresolved defNames survive load and save (AC-12).</li>
+        <li><code>public new void ExposeData()</code> calls <code>base.ExposeData()</code> and persists <code>Limit</code> with <code>Scribe_Values.Look</code> (NaN sentinel default). <em>Legacy migration:</em> settings saved by the earlier build have a <code>Threshold</code> float and no <code>Limit</code> node; when loading reads no <code>Limit</code> but a <code>Threshold</code>, <code>Limit</code> becomes <code>[threshold, 1]</code>, which preserves the old behavior. The load path touches only values, never <code>.Def</code>. Only the defName and range are persisted, never <code>Scribe_Defs</code> / <code>LookMode.Def</code> (AC-11). Unresolved defNames survive load and save (AC-12).</li>
       </ul></li>
     <li><strong>Rule fields</strong> (after <code>AllowedWorkers</code>): <code>public bool? FilterNeeds;</code> (<code>null</code> = Inherit, <code>false</code> = Off, <code>true</code> = On) and <code>public List&lt;NeedLimit&gt;? NeedLimits = [];</code>. The list is nullable because Scribe can set it to <code>null</code> on load (AC-1).</li>
-    <li><strong>Persistence.</strong> <code>ExposeData</code> adds <code>Scribe_Values.Look(ref FilterNeeds, …)</code> and <code>Scribe_Collections.Look(ref NeedLimits, …, LookMode.Deep)</code>, followed by <code>if (Scribe.mode == LoadSaveMode.LoadingVars) ValidateNeedsFilter();</code>. <code>ValidateNeedsFilter</code> reads only <code>DefName</code> and <code>Threshold</code>, so it is safe before defs load (AC-10, AC-11). <code>Settings_Version</code> is not bumped: the nodes are additive and optional.</li>
+    <li><strong>Persistence.</strong> <code>ExposeData</code> adds <code>Scribe_Values.Look(ref FilterNeeds, …)</code> and <code>Scribe_Collections.Look(ref NeedLimits, …, LookMode.Deep)</code>, followed by <code>if (Scribe.mode == LoadSaveMode.LoadingVars) ValidateNeedsFilter();</code>. <code>ValidateNeedsFilter</code> reads only <code>DefName</code> and <code>Limit</code> (and, before the range exists, the legacy <code>Threshold</code>), so it is safe before defs load (AC-10, AC-11). <code>Settings_Version</code> is not bumped: the nodes are additive and optional.</li>
     <li><strong><code>internal void ValidateNeedsFilter()</code></strong>, also called from <code>Validate()</code> on every save:
       <ul>
         <li>Sets <code>NeedLimits ??= []</code> and drops null entries and entries with an empty <code>DefName</code>.</li>
         <li>Removes duplicate <code>DefName</code>s (OrdinalIgnoreCase) and keeps the first (AC-3).</li>
-        <li>Resets a NaN <code>Threshold</code> to <code>NeedLimit.DefaultThreshold</code> (0.5), otherwise clamps it with <code>Mathf.Clamp01</code> (AC-2).</li>
+        <li>Resets a NaN min or max to <code>NeedLimit.DefaultMin</code> (0.5) or <code>DefaultMax</code> (1), clamps both with <code>Mathf.Clamp01</code>, and swaps them when min &gt; max (AC-2).</li>
         <li>On the default rule (<code>DefName == null</code>), sets <code>FilterNeeds ??= false</code> (AC-4).</li>
       </ul>
       The method is <code>internal</code> because <code>Validate()</code> reads <code>WorkManagerMod.Settings</code>, which is not available in unit tests.</li>
@@ -182,7 +183,7 @@ source: ""
             <li>Returns <code>false</code> when the state is not On or the list is empty (AC-19).</li>
             <li>Skips entries whose <code>Def == null</code> (AC-18).</li>
             <li>Skips a <code>null</code> level: the pawn lacks the need (AC-16) or <code>pawn.needs == null</code> (AC-17).</li>
-            <li>Blocks when <code>level &lt; Threshold</code> for any entry. The comparison is strict: a level equal to the threshold passes (AC-14), and a 0% threshold never blocks (AC-15, AC-13).</li>
+            <li>Blocks when <code>level &lt; Limit.min || level &gt; Limit.max</code> for any entry. The range is inclusive: a level equal to either bound passes (AC-14), and a [0%, 100%] range never blocks (AC-15, AC-13).</li>
             <li>Keeps no state between updates (AC-21).</li>
           </ul></li>
         <li><code>CurLevelPercentage</code> is used rather than <code>CurLevel</code> because Food and MechEnergy have <code>MaxLevel != 1</code> (<a href="../../../.asd/sprints/archived/002-work-type-needs-filters/audit.md">audit</a> R-1).</li>
@@ -226,10 +227,10 @@ source: ""
   <h2 id="alternatives">Alternatives considered</h2>
   <ul class="alt-list">
     <li><strong>Persisted <code>NeedDef → float</code> dictionary</strong>, rejected because it needs <code>LookMode.Def</code> or manual key lists, breaks loading before defs, and diverges from Common's limit pattern.</li>
-    <li><strong><code>FloatRange</code> per need (like <code>PawnCapacityLimit</code>)</strong>, rejected because the scope is a lower threshold only. A range doubles the UI and the semantics with no requirement behind it.</li>
+    <li><strong><code>FloatRange</code> per need (like <code>PawnCapacityLimit</code>)</strong>, rejected at the time because the scope was a lower threshold only. Adopted on 2026-10-01 at user request (see the amendment note above).</li>
     <li><strong>A separate <code>NeedsFilter</code> sub-object</strong>, rejected because it adds a layer for two fields when the rule already hosts sibling tri-state fields.</li>
     <li><strong>A needs dimension in Common's <code>PawnFilter</code></strong>, rejected because Common is not editable from this repo (non-goal).</li>
-    <li><strong>A per-entry predicate <code>(float? level, float threshold)</code> as the only seam</strong>, rejected because it leaves the aggregation loop untested: the any-entry rule, the unresolved skip and the state gating.</li>
+    <li><strong>A per-entry predicate <code>(float? level, FloatRange limit)</code> as the only seam</strong>, rejected because it leaves the aggregation loop untested: the any-entry rule, the unresolved skip and the state gating.</li>
     <li><strong>Real <code>Pawn</code> / <code>Pawn_NeedsTracker</code> objects built through <code>GetUninitializedObject</code> and reflection</strong>, rejected as brittle against game internals (audit G-7).</li>
   </ul>
 
@@ -238,7 +239,7 @@ source: ""
   <table>
     <thead><tr><th>#</th><th>What</th><th>Why</th><th>Justification</th><th>Alternatives</th></tr></thead>
     <tbody>
-      <tr><td>CA-1</td><td>New class <code>NeedLimit : DefCache&lt;NeedDef&gt;, IExposable</code></td><td>Persist one need and its threshold by name</td><td>Per-need thresholds are in scope, and they must persist by defName before defs load. The class mirrors Common's <code>PawnCapacityLimit</code>.</td><td>A dictionary (breaks loading before defs); reusing <code>PawnCapacityLimit</code> (wrong def type)</td></tr>
+      <tr><td>CA-1</td><td>New class <code>NeedLimit : DefCache&lt;NeedDef&gt;, IExposable</code></td><td>Persist one need and its range by name</td><td>Per-need ranges are in scope, and they must persist by defName before defs load. The class mirrors Common's <code>PawnCapacityLimit</code>.</td><td>A dictionary (breaks loading before defs); reusing <code>PawnCapacityLimit</code> (wrong def type)</td></tr>
       <tr><td>CA-2</td><td>New rule fields <code>bool? FilterNeeds</code> and <code>List&lt;NeedLimit&gt;? NeedLimits</code> (new settings surface)</td><td>Tri-state inheritance plus the entries</td><td>Approved scope and PRD D3; the same shape as the sibling fields</td><td>A separate <code>NeedsFilter</code> class (an extra layer)</td></tr>
       <tr><td>CA-3</td><td><code>internal static IsNeedBlocked(bool?, IReadOnlyList&lt;NeedLimit&gt;?, Func&lt;NeedDef, float?&gt;)</code> and <code>internal bool IsNeedBlocked(Pawn)</code></td><td>A unit-test seam, also reused by the ADR-0007 fail-safe</td><td>A <code>Pawn</code> cannot be built in net472 tests, and the aggregation logic must be tested</td><td>A per-entry predicate only (leaves the loop untested)</td></tr>
       <tr><td>CA-4</td><td><code>internal void ValidateNeedsFilter()</code> and <code>internal static GetAddableNeeds(...)</code> / <code>HasAddableNeeds(...)</code></td><td>Make the validation and add-menu logic testable</td><td><code>Validate()</code> depends on <code>WorkManagerMod.Settings</code>, and a UI lambda cannot be tested</td><td>Private methods called through reflection (existing precedent, but noisier)</td></tr>

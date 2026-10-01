@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LordKuper.Common;
 using RimWorld;
+using Verse;
 
 namespace LordKuper.WorkManager.Tests;
 
@@ -60,58 +61,80 @@ public class NeedsFilterTests : StateIsolationTestBase
 
     // ==================== ValidateNeedsFilter ====================
 
-    [Test]
-    public void ValidateNeedsFilter_ThresholdBelowZero_Clamped()
+    private static WorkTypeAssignmentRule RuleWithRange(float min, float max)
     {
-        var rule = new WorkTypeAssignmentRule("Mining")
+        return new WorkTypeAssignmentRule("Mining")
         {
-            NeedLimits = [new NeedLimit("Hunger") { Threshold = -0.5f }]
+            NeedLimits = [new NeedLimit("Hunger") { Limit = new FloatRange(min, max) }]
         };
-
-        rule.ValidateNeedsFilter();
-
-        rule.NeedLimits![0].Threshold.Should().Be(0f);
     }
 
     [Test]
-    public void ValidateNeedsFilter_ThresholdAboveOne_Clamped()
+    public void ValidateNeedsFilter_BoundsOutsideUnitRange_Clamped()
     {
-        var rule = new WorkTypeAssignmentRule("Mining")
-        {
-            NeedLimits = [new NeedLimit("Hunger") { Threshold = 1.5f }]
-        };
+        var rule = RuleWithRange(-0.5f, 1.5f);
 
         rule.ValidateNeedsFilter();
 
-        rule.NeedLimits![0].Threshold.Should().Be(1f);
+        rule.NeedLimits![0].Limit.Should().Be(new FloatRange(0f, 1f));
     }
 
     [Test]
-    public void ValidateNeedsFilter_ThresholdNaN_ResetToDefault()
+    public void ValidateNeedsFilter_BothBoundsAboveOne_ClampedToOne()
     {
-        var rule = new WorkTypeAssignmentRule("Mining")
-        {
-            NeedLimits = [new NeedLimit("Hunger") { Threshold = float.NaN }]
-        };
+        var rule = RuleWithRange(1.2f, 1.5f);
 
         rule.ValidateNeedsFilter();
 
-        rule.NeedLimits![0].Threshold.Should().Be(NeedLimit.DefaultThreshold);
+        rule.NeedLimits![0].Limit.Should().Be(new FloatRange(1f, 1f));
     }
 
-    [TestCase(0f)]
-    [TestCase(0.37f)]
-    [TestCase(1f)]
-    public void ValidateNeedsFilter_ThresholdInRange_Unchanged(float threshold)
+    [Test]
+    public void ValidateNeedsFilter_MinNaN_ResetToDefaultMin()
     {
-        var rule = new WorkTypeAssignmentRule("Mining")
-        {
-            NeedLimits = [new NeedLimit("Hunger") { Threshold = threshold }]
-        };
+        var rule = RuleWithRange(float.NaN, 0.8f);
 
         rule.ValidateNeedsFilter();
 
-        rule.NeedLimits![0].Threshold.Should().Be(threshold);
+        rule.NeedLimits![0].Limit.Should().Be(new FloatRange(NeedLimit.DefaultMin, 0.8f));
+    }
+
+    [Test]
+    public void ValidateNeedsFilter_MaxNaN_ResetToDefaultMax()
+    {
+        var rule = RuleWithRange(0.2f, float.NaN);
+
+        rule.ValidateNeedsFilter();
+
+        rule.NeedLimits![0].Limit.Should().Be(new FloatRange(0.2f, NeedLimit.DefaultMax));
+    }
+
+    [Test]
+    public void ValidateNeedsFilter_MinAboveMax_Swapped()
+    {
+        var rule = RuleWithRange(0.8f, 0.2f);
+
+        rule.ValidateNeedsFilter();
+
+        rule.NeedLimits![0].Limit.Should().Be(new FloatRange(0.2f, 0.8f));
+    }
+
+    [TestCase(0f, 1f)]
+    [TestCase(0.37f, 0.37f)]
+    [TestCase(0.3f, 0.6f)]
+    public void ValidateNeedsFilter_RangeInBounds_Unchanged(float min, float max)
+    {
+        var rule = RuleWithRange(min, max);
+
+        rule.ValidateNeedsFilter();
+
+        rule.NeedLimits![0].Limit.Should().Be(new FloatRange(min, max));
+    }
+
+    [Test]
+    public void NewNeedLimit_DefaultsToHalfToFull()
+    {
+        new NeedLimit("Hunger").Limit.Should().Be(new FloatRange(0.5f, 1f));
     }
 
     [Test]
@@ -121,9 +144,9 @@ public class NeedsFilterTests : StateIsolationTestBase
         {
             NeedLimits =
             [
-                new NeedLimit("Hunger") { Threshold = 0.3f },
-                new NeedLimit("Hunger") { Threshold = 0.7f },
-                new NeedLimit("Beauty") { Threshold = 0.4f }
+                new NeedLimit("Hunger") { Limit = new FloatRange(0.3f, 1f) },
+                new NeedLimit("Hunger") { Limit = new FloatRange(0.7f, 1f) },
+                new NeedLimit("Beauty") { Limit = new FloatRange(0.4f, 1f) }
             ]
         };
 
@@ -131,7 +154,7 @@ public class NeedsFilterTests : StateIsolationTestBase
 
         rule.NeedLimits.Should().HaveCount(2);
         rule.NeedLimits![0].DefName.Should().Be("Hunger");
-        rule.NeedLimits[0].Threshold.Should().Be(0.3f);
+        rule.NeedLimits[0].Limit.min.Should().Be(0.3f);
         rule.NeedLimits[1].DefName.Should().Be("Beauty");
     }
 
@@ -142,9 +165,9 @@ public class NeedsFilterTests : StateIsolationTestBase
         {
             NeedLimits =
             [
-                new NeedLimit("Hunger") { Threshold = 0.3f },
-                new NeedLimit("HUNGER") { Threshold = 0.7f },
-                new NeedLimit("Beauty") { Threshold = 0.4f }
+                new NeedLimit("Hunger") { Limit = new FloatRange(0.3f, 1f) },
+                new NeedLimit("HUNGER") { Limit = new FloatRange(0.7f, 1f) },
+                new NeedLimit("Beauty") { Limit = new FloatRange(0.4f, 1f) }
             ]
         };
 
@@ -162,10 +185,10 @@ public class NeedsFilterTests : StateIsolationTestBase
         {
             NeedLimits =
             [
-                new NeedLimit("Hunger") { Threshold = 0.3f },
+                new NeedLimit("Hunger") { Limit = new FloatRange(0.3f, 1f) },
                 null!,
-                new NeedLimit("") { Threshold = 0.5f },
-                new NeedLimit("Beauty") { Threshold = 0.4f }
+                new NeedLimit("") { Limit = new FloatRange(0.5f, 1f) },
+                new NeedLimit("Beauty") { Limit = new FloatRange(0.4f, 1f) }
             ]
         };
 
@@ -181,7 +204,7 @@ public class NeedsFilterTests : StateIsolationTestBase
     {
         var rule = new WorkTypeAssignmentRule("Mining")
         {
-            NeedLimits = [new NeedLimit("NeedFromRemovedMod") { Threshold = 0.4f }]
+            NeedLimits = [new NeedLimit("NeedFromRemovedMod") { Limit = new FloatRange(0.4f, 1f) }]
         };
 
         rule.ValidateNeedsFilter();
@@ -306,9 +329,9 @@ public class NeedsFilterTests : StateIsolationTestBase
     public void Combine_MainInherit_TakesFallbackEntries()
     {
         var (main, fallback) = CreateCombinablePair();
-        var hunger = new NeedLimit("Hunger") { Threshold = 0.5f };
-        var rest = new NeedLimit("Rest") { Threshold = 0.2f };
-        main.NeedLimits = [new NeedLimit("Beauty") { Threshold = 0.9f }];
+        var hunger = new NeedLimit("Hunger") { Limit = new FloatRange(0.5f, 1f) };
+        var rest = new NeedLimit("Rest") { Limit = new FloatRange(0.2f, 1f) };
+        main.NeedLimits = [new NeedLimit("Beauty") { Limit = new FloatRange(0.9f, 1f) }];
         fallback.FilterNeeds = true;
         fallback.NeedLimits = [hunger, rest];
 
@@ -348,7 +371,7 @@ public class NeedsFilterTests : StateIsolationTestBase
         var (main, fallback) = CreateCombinablePair();
         main.FilterNeeds = false;
         fallback.FilterNeeds = true;
-        fallback.NeedLimits = [new NeedLimit("Hunger") { Threshold = 0.5f }];
+        fallback.NeedLimits = [new NeedLimit("Hunger") { Limit = new FloatRange(0.5f, 1f) }];
 
         var combined = WorkTypeAssignmentRule.Combine(main, fallback);
 
@@ -360,11 +383,11 @@ public class NeedsFilterTests : StateIsolationTestBase
     public void Combine_MainOn_UsesMainEntriesOnly()
     {
         var (main, fallback) = CreateCombinablePair();
-        var hunger = new NeedLimit("Hunger") { Threshold = 0.3f };
+        var hunger = new NeedLimit("Hunger") { Limit = new FloatRange(0.3f, 1f) };
         main.FilterNeeds = true;
         main.NeedLimits = [hunger];
         fallback.FilterNeeds = true;
-        fallback.NeedLimits = [new NeedLimit("Beauty") { Threshold = 0.5f }];
+        fallback.NeedLimits = [new NeedLimit("Beauty") { Limit = new FloatRange(0.5f, 1f) }];
 
         var combined = WorkTypeAssignmentRule.Combine(main, fallback);
 
@@ -379,7 +402,7 @@ public class NeedsFilterTests : StateIsolationTestBase
         var (main, fallback) = CreateCombinablePair();
         main.FilterNeeds = true;
         fallback.FilterNeeds = true;
-        fallback.NeedLimits = [new NeedLimit("Hunger") { Threshold = 0.5f }];
+        fallback.NeedLimits = [new NeedLimit("Hunger") { Limit = new FloatRange(0.5f, 1f) }];
 
         var combined = WorkTypeAssignmentRule.Combine(main, fallback);
 
@@ -393,7 +416,7 @@ public class NeedsFilterTests : StateIsolationTestBase
     public void IsNeedBlocked_StateOff_NeverBlocks()
     {
         var hunger = RegisterNeed("Hunger");
-        var limits = new List<NeedLimit> { new(hunger) { Threshold = 0.5f } };
+        var limits = new List<NeedLimit> { new(hunger) { Limit = new FloatRange(0.5f, 1f) } };
 
         WorkTypeAssignmentRule.IsNeedBlocked(false, limits, _ => 0.1f).Should().BeFalse();
     }
@@ -402,7 +425,7 @@ public class NeedsFilterTests : StateIsolationTestBase
     public void IsNeedBlocked_StateInherit_NeverBlocks()
     {
         var hunger = RegisterNeed("Hunger");
-        var limits = new List<NeedLimit> { new(hunger) { Threshold = 0.5f } };
+        var limits = new List<NeedLimit> { new(hunger) { Limit = new FloatRange(0.5f, 1f) } };
 
         WorkTypeAssignmentRule.IsNeedBlocked(null, limits, _ => 0.1f).Should().BeFalse();
     }
@@ -423,32 +446,56 @@ public class NeedsFilterTests : StateIsolationTestBase
     [TestCase(0.5f, false)]
     [TestCase(0.51f, false)]
     [TestCase(0f, true)]
-    public void IsNeedBlocked_SingleEntry_BlocksOnlyWhenStrictlyBelowThreshold(float level, bool expected)
+    public void IsNeedBlocked_DefaultRange_BlocksBelowMin(float level, bool expected)
     {
         var hunger = RegisterNeed("Hunger");
-        var limits = new List<NeedLimit> { new(hunger) { Threshold = 0.5f } };
+        var limits = new List<NeedLimit> { new(hunger) };
 
         WorkTypeAssignmentRule.IsNeedBlocked(true, limits, _ => level).Should().Be(expected);
+    }
+
+    [TestCase(0.29f, true)]
+    [TestCase(0.3f, false)]
+    [TestCase(0.45f, false)]
+    [TestCase(0.6f, false)]
+    [TestCase(0.61f, true)]
+    [TestCase(1f, true)]
+    public void IsNeedBlocked_InteriorRange_BlocksOutsideInclusiveBounds(float level, bool expected)
+    {
+        var hunger = RegisterNeed("Hunger");
+        var limits = new List<NeedLimit> { new(hunger) { Limit = new FloatRange(0.3f, 0.6f) } };
+
+        WorkTypeAssignmentRule.IsNeedBlocked(true, limits, _ => level).Should().Be(expected);
+    }
+
+    [Test]
+    public void IsNeedBlocked_AboveMax_Blocks()
+    {
+        var hunger = RegisterNeed("Hunger");
+        var limits = new List<NeedLimit> { new(hunger) { Limit = new FloatRange(0f, 0.8f) } };
+
+        WorkTypeAssignmentRule.IsNeedBlocked(true, limits, _ => 0.81f).Should().BeTrue();
+    }
+
+    [Test]
+    public void IsNeedBlocked_ExactlyMinOrMax_Passes()
+    {
+        var hunger = RegisterNeed("Hunger");
+        var limits = new List<NeedLimit> { new(hunger) { Limit = new FloatRange(0.2f, 0.8f) } };
+
+        WorkTypeAssignmentRule.IsNeedBlocked(true, limits, _ => 0.2f).Should().BeFalse();
+        WorkTypeAssignmentRule.IsNeedBlocked(true, limits, _ => 0.8f).Should().BeFalse();
     }
 
     [TestCase(0f)]
     [TestCase(0.5f)]
-    public void IsNeedBlocked_ZeroThreshold_NeverBlocks(float level)
+    [TestCase(1f)]
+    public void IsNeedBlocked_FullRange_NeverBlocks(float level)
     {
         var hunger = RegisterNeed("Hunger");
-        var limits = new List<NeedLimit> { new(hunger) { Threshold = 0f } };
+        var limits = new List<NeedLimit> { new(hunger) { Limit = new FloatRange(0f, 1f) } };
 
         WorkTypeAssignmentRule.IsNeedBlocked(true, limits, _ => level).Should().BeFalse();
-    }
-
-    [TestCase(0.99f, true)]
-    [TestCase(1f, false)]
-    public void IsNeedBlocked_FullThreshold_PassesOnlyAtFullLevel(float level, bool expected)
-    {
-        var hunger = RegisterNeed("Hunger");
-        var limits = new List<NeedLimit> { new(hunger) { Threshold = 1f } };
-
-        WorkTypeAssignmentRule.IsNeedBlocked(true, limits, _ => level).Should().Be(expected);
     }
 
     [Test]
@@ -459,8 +506,8 @@ public class NeedsFilterTests : StateIsolationTestBase
         var levels = new Dictionary<NeedDef, float> { [rest] = 0.9f };
         var limits = new List<NeedLimit>
         {
-            new(hunger) { Threshold = 0.5f },
-            new(rest) { Threshold = 0.5f }
+            new(hunger) { Limit = new FloatRange(0.5f, 1f) },
+            new(rest) { Limit = new FloatRange(0.5f, 1f) }
         };
 
         var blocked = WorkTypeAssignmentRule.IsNeedBlocked(true, limits,
@@ -476,8 +523,8 @@ public class NeedsFilterTests : StateIsolationTestBase
         var rest = RegisterNeed("Rest");
         var limits = new List<NeedLimit>
         {
-            new(hunger) { Threshold = 0.5f },
-            new(rest) { Threshold = 1f }
+            new(hunger) { Limit = new FloatRange(0.5f, 1f) },
+            new(rest) { Limit = new FloatRange(1f, 1f) }
         };
 
         WorkTypeAssignmentRule.IsNeedBlocked(true, limits, _ => null).Should().BeFalse();
@@ -486,7 +533,7 @@ public class NeedsFilterTests : StateIsolationTestBase
     [Test]
     public void IsNeedBlocked_UnresolvedEntry_Skipped()
     {
-        var limits = new List<NeedLimit> { new("NeedFromRemovedMod") { Threshold = 1f } };
+        var limits = new List<NeedLimit> { new("NeedFromRemovedMod") { Limit = new FloatRange(1f, 1f) } };
         var lookups = 0;
 
         var blocked = WorkTypeAssignmentRule.IsNeedBlocked(true, limits, _ =>
@@ -505,15 +552,15 @@ public class NeedsFilterTests : StateIsolationTestBase
         var rest = RegisterNeed("Rest");
         var limits = new List<NeedLimit>
         {
-            new("NeedFromRemovedMod") { Threshold = 1f },
-            new(rest) { Threshold = 0.5f }
+            new("NeedFromRemovedMod") { Limit = new FloatRange(1f, 1f) },
+            new(rest) { Limit = new FloatRange(0.5f, 1f) }
         };
 
         WorkTypeAssignmentRule.IsNeedBlocked(true, limits, _ => 0.2f).Should().BeTrue();
     }
 
     [Test]
-    public void IsNeedBlocked_AnyOneEntryBelowThreshold_Blocks()
+    public void IsNeedBlocked_AnyOneEntryOutsideRange_Blocks()
     {
         var hunger = RegisterNeed("Hunger");
         var beauty = RegisterNeed("Beauty");
@@ -521,9 +568,9 @@ public class NeedsFilterTests : StateIsolationTestBase
         var levels = new Dictionary<NeedDef, float> { [hunger] = 0.9f, [beauty] = 0.4f, [joy] = 0.9f };
         var limits = new List<NeedLimit>
         {
-            new(hunger) { Threshold = 0.5f },
-            new(beauty) { Threshold = 0.6f },
-            new(joy) { Threshold = 0.5f }
+            new(hunger) { Limit = new FloatRange(0.5f, 1f) },
+            new(beauty) { Limit = new FloatRange(0.6f, 1f) },
+            new(joy) { Limit = new FloatRange(0.5f, 1f) }
         };
 
         var blocked = WorkTypeAssignmentRule.IsNeedBlocked(true, limits,
@@ -533,15 +580,15 @@ public class NeedsFilterTests : StateIsolationTestBase
     }
 
     [Test]
-    public void IsNeedBlocked_AllEntriesAtOrAboveThreshold_Passes()
+    public void IsNeedBlocked_AllEntriesInsideRange_Passes()
     {
         var hunger = RegisterNeed("Hunger");
         var beauty = RegisterNeed("Beauty");
         var levels = new Dictionary<NeedDef, float> { [hunger] = 0.5f, [beauty] = 0.8f };
         var limits = new List<NeedLimit>
         {
-            new(hunger) { Threshold = 0.5f },
-            new(beauty) { Threshold = 0.6f }
+            new(hunger) { Limit = new FloatRange(0.5f, 1f) },
+            new(beauty) { Limit = new FloatRange(0.6f, 1f) }
         };
 
         var blocked = WorkTypeAssignmentRule.IsNeedBlocked(true, limits,
@@ -554,7 +601,7 @@ public class NeedsFilterTests : StateIsolationTestBase
     public void IsNeedBlocked_RepeatedCalls_ReflectCurrentLevels()
     {
         var rest = RegisterNeed("Rest");
-        var limits = new List<NeedLimit> { new(rest) { Threshold = 0.5f } };
+        var limits = new List<NeedLimit> { new(rest) { Limit = new FloatRange(0.5f, 1f) } };
         var level = 0.2f;
 
         var firstVerdict = WorkTypeAssignmentRule.IsNeedBlocked(true, limits, _ => level);

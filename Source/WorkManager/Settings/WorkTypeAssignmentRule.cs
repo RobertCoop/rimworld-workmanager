@@ -415,7 +415,7 @@ internal class WorkTypeAssignmentRule : DefCache<WorkTypeDef>, IExposable
                 foreach (var limit in NeedLimits)
                 {
                     stringBuilder.AppendLineIndented(
-                        $"{limit.Label}: {limit.Threshold.ToStringPercent()}",
+                        $"{limit.Label} [{limit.Limit.min.ToStringPercent()}..{limit.Limit.max.ToStringPercent()}]",
                         2);
                 }
             }
@@ -604,7 +604,7 @@ internal class WorkTypeAssignmentRule : DefCache<WorkTypeDef>, IExposable
     /// </summary>
     /// <param name="pawn">The pawn to evaluate.</param>
     /// <returns>
-    ///     <see langword="true" /> if the filter is on and the pawn's level for any listed need is below its threshold.
+    ///     <see langword="true" /> if the filter is on and the pawn's level for any listed need is outside its range.
     /// </returns>
     internal bool IsNeedBlocked(Pawn pawn)
     {
@@ -613,11 +613,11 @@ internal class WorkTypeAssignmentRule : DefCache<WorkTypeDef>, IExposable
     }
 
     /// <summary>
-    ///     Determines whether any need in <paramref name="limits" /> is strictly below its threshold. Entries whose def is
+    ///     Determines whether any need in <paramref name="limits" /> is outside its inclusive range. Entries whose def is
     ///     unresolved and needs the pawn does not have are ignored.
     /// </summary>
     /// <param name="filterNeeds">The filter state; only <c>true</c> can block.</param>
-    /// <param name="limits">The need thresholds.</param>
+    /// <param name="limits">The need ranges.</param>
     /// <param name="getLevelPercentage">
     ///     Returns the pawn's level for a need as a fraction of its maximum, or <c>null</c> when the pawn lacks the need.
     /// </param>
@@ -631,14 +631,14 @@ internal class WorkTypeAssignmentRule : DefCache<WorkTypeDef>, IExposable
             var def = limit.Def;
             if (def == null) continue;
             var level = getLevelPercentage(def);
-            if (level.HasValue && level.Value < limit.Threshold) return true;
+            if (level.HasValue && (level.Value < limit.Limit.min || level.Value > limit.Limit.max)) return true;
         }
         return false;
     }
 
     /// <summary>
-    ///     Normalizes the needs filter: creates the list, drops empty and duplicate entries, clamps thresholds and sets the
-    ///     default rule's state. Reads only def names and thresholds, so it is safe before defs are loaded.
+    ///     Normalizes the needs filter: creates the list, drops empty and duplicate entries, normalizes ranges (NaN reset, clamp, swap) and sets the
+    ///     default rule's state. Reads only def names and ranges, so it is safe before defs are loaded.
     /// </summary>
     internal void ValidateNeedsFilter()
     {
@@ -648,9 +648,9 @@ internal class WorkTypeAssignmentRule : DefCache<WorkTypeDef>, IExposable
             limit == null || string.IsNullOrEmpty(limit.DefName) || !seen.Add(limit.DefName!));
         foreach (var limit in NeedLimits)
         {
-            limit.Threshold = float.IsNaN(limit.Threshold)
-                ? NeedLimit.DefaultThreshold
-                : Mathf.Clamp01(limit.Threshold);
+            var min = float.IsNaN(limit.Limit.min) ? NeedLimit.DefaultMin : Mathf.Clamp01(limit.Limit.min);
+            var max = float.IsNaN(limit.Limit.max) ? NeedLimit.DefaultMax : Mathf.Clamp01(limit.Limit.max);
+            limit.Limit = min <= max ? new FloatRange(min, max) : new FloatRange(max, min);
         }
         if (DefName == null) FilterNeeds ??= false;
     }

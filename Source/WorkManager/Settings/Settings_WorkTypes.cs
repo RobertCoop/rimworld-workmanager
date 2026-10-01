@@ -37,6 +37,11 @@ public partial class Settings
         AllowedWorkersPawnSkillInputLocalId + 100;
 
     /// <summary>
+    ///     Local input ID for the need limit range sliders; clear of the worker filter ranges above.
+    /// </summary>
+    private const int NeedLimitsInputLocalId = 1000;
+
+    /// <summary>
     ///     Local input ID for dedicated workers pawn capacity.
     /// </summary>
     private const int DedicatedWorkersPawnCapacityInputLocalId =
@@ -369,13 +374,15 @@ public partial class Settings
                     ? limit.Label ?? limit.DefName!
                     : string.Format(Strings.NeedUnavailableLabel, limit.DefName);
                 var tooltip = resolved ? limit.Def!.description : Strings.NeedUnavailableTooltip;
-                var oldThreshold = limit.Threshold;
-                contentHeight += Fields.DoLabeledPercentSlider(needsRect, 1,
+                var oldLimit = limit.Limit;
+                contentHeight += Fields.DoLabeledPercentRangeSlider(needsRect,
+                    WorkManagerMod.GetModInputId(NeedLimitsInputLocalId + i), 1,
                     [
                         new IconButton(TexUI.DismissTex, () => { removeIndex = index; },
                             Common.Resources.Strings.Actions.Delete)
-                    ], label, tooltip, ref limit.Threshold, 0f, 1f, 0.01f, null, out needsRect);
-                if (!Mathf.Approximately(limit.Threshold, oldThreshold)) needsChanged = true;
+                    ], label, tooltip, ref limit.Limit, 0f, 1f, 0.01f, ToStringStyle.PercentZero, null, out needsRect);
+                if (!Mathf.Approximately(limit.Limit.min, oldLimit.min) ||
+                    !Mathf.Approximately(limit.Limit.max, oldLimit.max)) needsChanged = true;
             }
             if (removeIndex >= 0)
             {

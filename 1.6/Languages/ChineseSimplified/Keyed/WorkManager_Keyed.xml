@@ -184,12 +184,12 @@
     <LordKuper.WorkManager.Settings.WorkTypes.AvailablePawnsTooltip>符合允许工人筛选条件且当前未被需求筛选阻止的角色列表。需求水平会随时间变化；点击刷新按钮以更新。</LordKuper.WorkManager.Settings.WorkTypes.AvailablePawnsTooltip>
     <!-- EN: Needs -->
     <LordKuper.WorkManager.Settings.WorkTypes.NeedsLabel>需求</LordKuper.WorkManager.Settings.WorkTypes.NeedsLabel>
-    <!-- EN: The work type is disabled for a pawn while any need listed here is below its threshold. This overrides "ensure worker assigned" and "minimum workers". Pawns that do not have a listed need are not affected. Fast-changing needs (Beauty, Comfort, Food, Rest, Mood) may switch the work type on and off between updates. -->
-    <LordKuper.WorkManager.Settings.WorkTypes.NeedsTooltip>只要此处列出的任一需求低于其阈值，该工作类型就会对该角色禁用。此项优先于“确保分配工人”和“最少工人数”。没有所列需求的角色不受影响。变化较快的需求（美观、舒适、食物、休息、心情）可能会在两次更新之间使该工作类型反复启用和禁用。</LordKuper.WorkManager.Settings.WorkTypes.NeedsTooltip>
+    <!-- EN: The work type is disabled for a pawn while any need listed here is outside its allowed range (inclusive). This overrides "ensure worker assigned" and "minimum workers". Pawns that do not have a listed need are not affected. Fast-changing needs (Beauty, Comfort, Food, Rest, Mood) may switch the work type on and off between updates. -->
+    <LordKuper.WorkManager.Settings.WorkTypes.NeedsTooltip>只要此处列出的任一需求超出其允许范围（含边界），该工作类型就会对该角色禁用。此项优先于“确保分配工人”和“最少工人数”。没有所列需求的角色不受影响。变化较快的需求（美观、舒适、食物、休息、心情）可能会在两次更新之间使该工作类型反复启用和禁用。</LordKuper.WorkManager.Settings.WorkTypes.NeedsTooltip>
     <!-- EN: Filter by needs -->
     <LordKuper.WorkManager.Settings.WorkTypes.FilterNeedsLabel>按需求筛选</LordKuper.WorkManager.Settings.WorkTypes.FilterNeedsLabel>
-    <!-- EN: Pawns with a listed need below its threshold are not assigned to the work type. -->
-    <LordKuper.WorkManager.Settings.WorkTypes.FilterNeedsOnTooltip>任一所列需求低于其阈值的角色不会被分配到该工作类型。</LordKuper.WorkManager.Settings.WorkTypes.FilterNeedsOnTooltip>
+    <!-- EN: Pawns with a listed need outside its allowed range are not assigned to the work type. -->
+    <LordKuper.WorkManager.Settings.WorkTypes.FilterNeedsOnTooltip>任一所列需求超出其允许范围的角色不会被分配到该工作类型。</LordKuper.WorkManager.Settings.WorkTypes.FilterNeedsOnTooltip>
     <!-- EN: Needs are ignored when assigning the work type. -->
     <LordKuper.WorkManager.Settings.WorkTypes.FilterNeedsOffTooltip>分配工作类型时忽略需求。</LordKuper.WorkManager.Settings.WorkTypes.FilterNeedsOffTooltip>
     <!-- EN: No needs added. Nothing is filtered. -->

@@ -16,7 +16,7 @@ source: ""
   <meta name="subsystem" content="N/A">
   <meta name="sprint-id" content="002-work-type-needs-filters">
   <meta name="status" content="accepted">
-  <meta name="updated" content="2026-09-29">
+  <meta name="updated" content="2026-10-01">
   <meta name="responsibility" content="owns: needs settings UI, rule summary and localization; excludes: requirements, ux, code">
   <meta name="provenance" content="original">
   <meta name="source" content="">
@@ -127,7 +127,7 @@ source: ""
         <div class="stats">
           <span class="chip">accepted</span>
           <span class="chip">subsystem N/A</span>
-          <span class="chip">updated 2026-09-29</span>
+          <span class="chip">updated 2026-10-01</span>
         </div>
       </header>
       <main>
@@ -138,6 +138,8 @@ source: ""
     <span class="chip area">subsystem: N/A</span>
     <span class="chip">ADR-0008</span>
   </div>
+
+  <p><strong>Amended 2026-10-01: threshold → two-sided range at user request.</strong> Entry rows use a two-sided percent range slider, the summary line shows the range, and the tooltips describe a blocked state as "outside the range".</p>
 
   <h2 id="context">Context</h2>
   <ul>
@@ -159,12 +161,12 @@ source: ""
   <ol>
     <li><strong><code>Settings_WorkTypes.DoRuleNeeds(Rect rect, bool defaultRule, out Rect remRect)</code></strong>, called in <code>DoWorkTypeRule</code> right after <code>DoRuleAllowedWorkers</code> (AC-27).
       <ul>
-        <li>A new cached field <code>_needsSectionContentHeight</code> is updated on <code>EventType.Layout</code>. No input-id constants are needed.</li>
+        <li>A new cached field <code>_needsSectionContentHeight</code> is updated on <code>EventType.Layout</code>. The need range sliders use <code>NeedLimitsInputLocalId = 1000</code> (plus the row index), clear of the worker filter ranges.</li>
         <li>The section box is <code>Sections.DoLabeledSectionBox(..., Strings.NeedsLabel, Strings.NeedsTooltip, ...)</code>. <code>NeedsTooltip</code> makes the four AC-37 statements.</li>
         <li>State row, default rule: <code>Fields.DoLabeledCheckbox(ref bool)</code> with <code>GetFilterNeedsTooltip(false)</code> (Off / On).</li>
         <li>State row, work-type rule: <code>Fields.DoLabeledCheckbox(ref rule.FilterNeeds)</code> with <code>GetFilterNeedsTooltip(true)</code>. The Partial state uses the existing undefined-setting wording (AC-28, AC-29).</li>
         <li>With state On and no entries, a <code>Labels.DoLabel</code> row shows <code>Strings.NeedsEmptyLabel</code> (AC-36).</li>
-        <li>Each entry: <code>Fields.DoLabeledPercentSlider(rect, 1, [new IconButton(TexUI.DismissTex, remove, Common.Resources.Strings.Actions.Delete)], label, tooltip, ref limit.Threshold, 0f, 1f, 0.01f, null, out rect)</code> (AC-33, AC-34).
+        <li>Each entry: <code>Fields.DoLabeledPercentRangeSlider(rect, WorkManagerMod.GetModInputId(NeedLimitsInputLocalId + i), 1, [new IconButton(TexUI.DismissTex, remove, Common.Resources.Strings.Actions.Delete)], label, tooltip, ref limit.Limit, 0f, 1f, 0.01f, ToStringStyle.PercentZero, null, out rect)</code>, the same widget Common uses for capacity limits (AC-33, AC-34).
           <ul>
             <li>Resolved entry: label <code>limit.Label</code>, tooltip <code>limit.Def.description</code>.</li>
             <li>Unresolved entry: label <code>string.Format(Strings.NeedUnavailableLabel, limit.DefName)</code>, tooltip <code>Strings.NeedUnavailableTooltip</code>. It uses the same row layout and can be removed (AC-35).</li>
@@ -192,7 +194,7 @@ source: ""
         <li>Inherit: <code>WorkTypeRuleUndefinedSectionTooltip</code>.</li>
         <li>Off: <code>WorkTypeRuleDisabledSettingTooltip</code>.</li>
         <li>On with no entries: <code>NeedsEmptyLabel</code>.</li>
-        <li>On: one line per entry, <code>"&lt;label&gt;: &lt;Threshold.ToStringPercent()&gt;"</code>, using the defName when the entry is unresolved (AC-39).</li>
+        <li>On: one line per entry, <code>"&lt;label&gt; [&lt;min%&gt;..&lt;max%&gt;]"</code> (<code>Limit.min/max.ToStringPercent()</code>, like Common's PawnFilter summary), using the defName when the entry is unresolved (AC-39).</li>
       </ul>
       The summary is only read at UI time, after defs load, so the <code>DefCache</code> latch is safe.</li>
     <li><strong>Strings.</strong> New members in <code>Resources.Strings.Settings.WorkTypes</code>, keyed <code>LordKuper.WorkManager.Settings.WorkTypes.&lt;Name&gt;</code> (AC-42). The keys go in the 1.6 English, Russian and ChineseSimplified <code>WorkManager_Keyed.xml</code> only (AC-43, AC-44). The Russian and ChineseSimplified values are real translations, not English placeholders (AC-49, PRD D5).
@@ -206,7 +208,7 @@ source: ""
         <li>Reused unchanged: <code>WorkTypeRuleUndefinedSettingTooltip</code>, <code>WorkTypeRuleUndefinedSectionTooltip</code>, <code>WorkTypeRuleDisabledSettingTooltip</code>, and Common's <code>Actions.Add</code> / <code>Actions.Delete</code>.</li>
         <li>Each locale ends with the same 55 <code>Settings.WorkTypes.*</code> keys.</li>
       </ul></li>
-    <li><strong>Available pawns preview</strong> (amended 2026-09-30, reversing PRD D2 after in-game testing): <code>UpdateAllowedWorkers</code> also removes pawns that the rule's effective needs filter blocks — the rule's own <code>FilterNeeds</code>/<code>NeedLimits</code>, or the default rule's when the rule inherits — via the same <code>IsNeedBlocked(Pawn)</code> used for assignment. <code>DoRuleNeeds</code> refreshes the preview when the state, a threshold, or the entry list changes. Need levels are read when the list is rebuilt, so live level changes appear on the next edit or Refresh.</li>
+    <li><strong>Available pawns preview</strong> (amended 2026-09-30, reversing PRD D2 after in-game testing): <code>UpdateAllowedWorkers</code> also removes pawns that the rule's effective needs filter blocks — the rule's own <code>FilterNeeds</code>/<code>NeedLimits</code>, or the default rule's when the rule inherits — via the same <code>IsNeedBlocked(Pawn)</code> used for assignment. <code>DoRuleNeeds</code> refreshes the preview when the state, a need range, or the entry list changes. Need levels are read when the list is rebuilt, so live level changes appear on the next edit or Refresh.</li>
   </ol>
 
   <h2 id="consequences">Consequences</h2>
